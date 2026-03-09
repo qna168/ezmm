@@ -45,7 +45,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                 </div>
-                <h1 class="text-3xl font-extrabold text-white tracking-tight">極簡記帳</h1>
+                <h1 class="text-3xl font-extrabold text-white tracking-tight text-center">極簡記帳</h1>
             </div>
             <div class="space-y-5">
                 <input type="text" id="login-username" placeholder="帳號" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
@@ -57,39 +57,41 @@
 
     <!-- ================= 主畫面 ================= -->
     <div id="view-home" class="hidden flex flex-col h-full w-full max-md mx-auto relative bg-black">
-        <div class="bg-[#1C1C1E] px-4 pt-16 pb-6 z-10 rounded-b-[2rem] border-b border-zinc-800 shadow-md safe-top">
-            <div class="flex justify-between items-start mt-2">
-                <div class="pl-2 text-left">
-                    <p class="text-gray-400 text-sm font-medium mb-0.5">目前結餘</p>
-                    <h1 id="total-balance" class="text-5xl font-bold tracking-tighter text-white leading-none">$0</h1>
-                </div>
-                <button onclick="showForm('add')" class="active-scale bg-blue-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_8px_20px_rgba(59,130,246,0.3)] mr-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                </button>
+        <!-- 頂部區塊優化：金額完全寬屏，按鈕下移並排 -->
+        <div class="bg-[#1C1C1E] px-5 pt-16 pb-6 z-10 rounded-b-[2rem] border-b border-zinc-800 shadow-md safe-top">
+            <div class="text-left mb-6">
+                <p class="text-gray-400 text-sm font-medium mb-1">目前結餘</p>
+                <h1 id="total-balance" class="text-5xl font-black tracking-tighter text-white break-all leading-tight">$0</h1>
             </div>
-            <div class="mt-5 flex justify-end px-2">
-                <button onclick="showQuery()" class="text-xl text-blue-400 font-bold flex items-center active-scale bg-blue-500/10 px-6 py-2 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <!-- 風格統一的並排按鈕區 -->
+            <div class="flex items-center space-x-3">
+                <button onclick="showQuery()" class="flex-1 bg-zinc-800 text-blue-400 text-xl font-bold py-4 rounded-2xl flex items-center justify-center active-scale border border-zinc-700/50 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     查詢
                 </button>
+                <button onclick="showForm('add')" class="flex-1 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl flex items-center justify-center active-scale shadow-[0_4px_15px_rgba(37,99,235,0.3)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    新增
+                </button>
             </div>
         </div>
-        <div class="flex-1 overflow-y-auto px-3 py-4 pb-24">
-            <h2 class="text-xs text-zinc-500 font-bold mb-3 px-1 uppercase tracking-widest text-left">最近帳目 (最多 20 筆)</h2>
-            <div id="transaction-list" class="space-y-2.5"></div>
+        <div class="flex-1 overflow-y-auto px-4 py-4 pb-24">
+            <h2 class="text-xs text-zinc-500 font-bold mb-4 px-1 uppercase tracking-widest text-left">最近帳目 (最多 20 筆)</h2>
+            <div id="transaction-list" class="space-y-3"></div>
         </div>
     </div>
 
-    <!-- ================= 表單畫面 ================= -->
+    <!-- ================= 表單畫面 (新增/修改) ================= -->
     <div id="view-form" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto overflow-hidden">
-        <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
+        <!-- 頂部只留取消與標題 -->
+        <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top flex-shrink-0">
             <button onclick="hideForm()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">取消</button>
-            <h2 id="form-title" class="text-xl font-extrabold text-white text-center">新增帳目</h2>
-            <button onclick="saveTransaction()" class="text-blue-400 text-2xl font-black px-4 py-2 active-scale">儲存</button>
+            <h2 id="form-title" class="text-xl font-extrabold text-white">新增帳目</h2>
+            <div class="w-20"></div> <!-- 佔位符保持標題居中 -->
         </div>
         <div class="p-5 flex-1 overflow-y-auto bg-black pb-12 text-left">
             <input type="hidden" id="form-id">
@@ -102,7 +104,7 @@
             <div class="bg-[#1C1C1E] rounded-3xl overflow-hidden mb-8 border border-zinc-800/50 divide-y divide-zinc-800">
                 <div class="px-5 py-5 flex items-center">
                     <label class="w-16 flex-shrink-0 text-gray-400 font-bold text-lg">金額</label>
-                    <input type="text" id="form-amount" inputmode="numeric" pattern="\d*" placeholder="0" class="flex-1 min-w-0 ml-4 text-right text-3xl font-black focus:outline-none bg-transparent text-white placeholder-zinc-600">
+                    <input type="text" id="form-amount" inputmode="numeric" pattern="\d*" placeholder="0" class="flex-1 min-w-0 ml-4 text-right text-3xl font-black focus:outline-none bg-transparent text-white">
                 </div>
                 <div class="px-5 py-4 flex items-center">
                     <label class="w-16 flex-shrink-0 text-gray-400 font-bold text-lg">名稱</label>
@@ -121,33 +123,37 @@
                     <input type="text" id="form-note" placeholder="選填" class="flex-1 min-w-0 ml-4 text-right text-xl focus:outline-none bg-transparent text-white">
                 </div>
             </div>
-            <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full bg-[#1C1C1E] text-red-500 text-lg font-bold py-5 rounded-2xl border border-zinc-800 active-scale mt-2 text-center">刪除此筆帳目</button>
+
+            <!-- 操作重心下移：儲存與刪除在此 -->
+            <div class="space-y-4 px-2">
+                <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white text-2xl font-black py-5 rounded-2xl active-scale shadow-lg">儲存帳目</button>
+                <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full text-red-500 text-xl font-bold py-4 rounded-2xl active-scale opacity-80">刪除此筆帳目</button>
+            </div>
         </div>
     </div>
 
     <!-- ================= 查詢畫面 ================= -->
     <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto text-left overflow-hidden">
-        <!-- 頂部僅固定這欄 -->
+        <!-- 頂部僅固定導覽列 -->
         <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top flex-shrink-0 z-20">
             <button onclick="hideQuery()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">返回</button>
-            <h2 class="text-xl font-extrabold text-white text-center">查詢明細</h2>
+            <h2 class="text-xl font-extrabold text-white">查詢明細</h2>
             <button onclick="handleLogout()" class="text-red-400 text-2xl font-bold px-4 py-2 active-scale">登出</button>
         </div>
         
-        <!-- 下方全部為滾動區域 -->
         <div class="flex-1 overflow-y-auto px-3 pt-4 pb-24">
-            <!-- 篩選器 (會隨滾動捲走) -->
-            <div class="mb-4 bg-[#1C1C1E]/50 p-3 rounded-2xl border border-zinc-800/30">
-                <div class="flex items-center space-x-2 mb-3">
-                    <input type="date" id="query-start" class="flex-1 bg-zinc-800 text-white text-base px-3 py-2 rounded-xl outline-none">
+            <!-- 篩選區 (會隨滾動捲走) -->
+            <div class="mb-5 bg-[#1C1C1E]/50 p-4 rounded-2xl border border-zinc-800/30">
+                <div class="flex items-center space-x-2 mb-4">
+                    <input type="date" id="query-start" class="flex-1 bg-zinc-800 text-white text-base px-3 py-3 rounded-xl outline-none border border-zinc-700/50">
                     <span class="text-zinc-600 font-black">~</span>
-                    <input type="date" id="query-end" class="flex-1 bg-zinc-800 text-white text-base px-3 py-2 rounded-xl outline-none">
+                    <input type="date" id="query-end" class="flex-1 bg-zinc-800 text-white text-base px-3 py-3 rounded-xl outline-none border border-zinc-700/50">
                 </div>
-                <button onclick="executeQuery()" class="w-full bg-blue-600 text-white text-lg font-bold py-3 rounded-xl active-scale">開始查詢</button>
+                <button onclick="executeQuery()" class="w-full bg-blue-600 text-white text-lg font-bold py-4 rounded-2xl active-scale">開始查詢</button>
             </div>
 
-            <!-- 總計區 (三行垂直排列，大字體，會隨滾動捲走) -->
-            <div id="query-summary" class="hidden mb-6 bg-[#1C1C1E] p-5 rounded-3xl border border-zinc-800/50 space-y-4">
+            <!-- 總計區 (三行垂直排列，字體同步 text-2xl) -->
+            <div id="query-summary" class="hidden mb-6 bg-[#1C1C1E] p-6 rounded-[2rem] border border-zinc-800/50 space-y-4">
                 <div class="flex justify-between items-center px-2">
                     <span class="text-zinc-400 text-base font-bold">總收入</span>
                     <span id="query-total-income" class="text-2xl font-black text-green-400">$0</span>
@@ -159,12 +165,12 @@
                 <div class="h-px bg-zinc-800/50 mx-2"></div>
                 <div class="flex justify-between items-center px-2 pt-1">
                     <span class="text-zinc-300 text-lg font-black uppercase tracking-widest">結餘</span>
-                    <span id="query-net" class="text-3xl font-black text-white">$0</span>
+                    <span id="query-net" class="text-2xl font-black text-white">$0</span>
                 </div>
             </div>
 
             <!-- 查詢結果清單 -->
-            <div id="query-list" class="space-y-2.5"></div>
+            <div id="query-list" class="space-y-3"></div>
         </div>
     </div>
 
@@ -232,7 +238,7 @@
                     hideLoading();
                     showToast(res.message);
                 }
-            } catch (err) { hideLoading(); showToast('網路異常'); }
+            } catch (err) { hideLoading(); showToast('網路連線異常'); }
         }
 
         function handleLogout() {
@@ -254,7 +260,7 @@
                 } else {
                     showToast('讀取失敗：' + res.message);
                 }
-            } catch (err) { hideLoading(); showToast('網路異常'); }
+            } catch (err) { hideLoading(); showToast('網路連線異常'); }
         }
 
         function renderDashboard() {
@@ -286,19 +292,18 @@
 
             if (sortedTx.length > displayLimit) {
                 const moreBtn = document.createElement('button');
-                moreBtn.className = 'w-full py-4 mt-4 text-zinc-400 text-lg font-bold bg-[#1C1C1E] rounded-3xl border border-zinc-800/50 active-scale text-center';
+                moreBtn.className = 'w-full py-5 mt-4 text-zinc-400 text-lg font-bold bg-[#1C1C1E] rounded-3xl border border-zinc-800/50 active-scale text-center';
                 moreBtn.innerText = `顯示更多 (還有 ${sortedTx.length - displayLimit} 筆)`;
                 moreBtn.onclick = () => { displayLimit += 20; renderDashboard(); };
                 listEl.appendChild(moreBtn);
             }
         }
 
-        // 統一三層結構渲染函式 (規格同步)
         function createTransactionItem(tx) {
             const isExpense = tx.type === 'expense';
             const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
             const sign = isExpense ? '-' : '+';
-            const noteHtml = tx.note ? `<div class="w-full text-sm text-zinc-500 mt-0.5 border-t border-zinc-800/10 pt-0.5 text-left truncate">📝 ${tx.note}</div>` : '';
+            const noteHtml = tx.note ? `<div class="w-full text-sm text-zinc-500 mt-1.5 border-t border-zinc-800/10 pt-0.5 text-left truncate">📝 ${tx.note}</div>` : '';
             
             const item = document.createElement('div');
             item.className = 'bg-[#1C1C1E] px-4 py-3 rounded-[1.5rem] border border-zinc-800/50 flex flex-col active-scale relative overflow-hidden';
@@ -311,7 +316,7 @@
                     <div class="flex items-center space-x-4 flex-shrink-0 ml-4">
                         <span class="font-black ${amountColor} text-2xl tracking-tighter">${sign}$${tx.amount.toLocaleString()}</span>
                         <button onclick="showForm('edit', '${tx.id}')" class="w-10 h-10 bg-zinc-800/70 rounded-2xl flex items-center justify-center text-zinc-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
                         </button>
