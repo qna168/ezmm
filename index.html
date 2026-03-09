@@ -68,7 +68,8 @@
 
     <!-- ================= 主畫面 (Home View) ================= -->
     <div id="view-home" class="hidden flex flex-col h-full w-full max-md mx-auto relative bg-black">
-        <div class="bg-[#1C1C1E] px-4 pt-4 pb-4 z-10 rounded-b-[1.5rem] border-b border-zinc-800 shadow-sm safe-top">
+        <!-- pt-10 確保內容不與 iOS 狀態列重疊 -->
+        <div class="bg-[#1C1C1E] px-4 pt-10 pb-4 z-10 rounded-b-[1.5rem] border-b border-zinc-800 shadow-sm safe-top">
             <div class="flex justify-between items-center mt-2">
                 <div>
                     <p class="text-gray-300 text-base font-medium mb-0.5">目前結餘</p>
@@ -97,7 +98,8 @@
 
     <!-- ================= 表單畫面 (新增/修改) ================= -->
     <div id="view-form" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto">
-        <div class="flex justify-between items-center px-4 pt-4 pb-3 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
+        <!-- pt-10 同步下移 -->
+        <div class="flex justify-between items-center px-4 pt-10 pb-3 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
             <button onclick="hideForm()" class="text-blue-400 text-lg font-medium px-2 py-1 active-scale">取消</button>
             <h2 id="form-title" class="text-xl font-semibold text-white">新增帳目</h2>
             <button onclick="saveTransaction()" class="text-blue-400 text-lg font-bold px-2 py-1 active-scale">儲存</button>
@@ -140,7 +142,8 @@
 
     <!-- ================= 查詢畫面 ================= -->
     <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto">
-        <div class="flex justify-between items-center px-4 pt-4 pb-3 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
+        <!-- pt-10 同步下移 -->
+        <div class="flex justify-between items-center px-4 pt-10 pb-3 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
             <button onclick="hideQuery()" class="text-blue-400 text-lg font-medium px-2 py-1 active-scale">返回</button>
             <h2 class="text-xl font-semibold text-white">查詢</h2>
             <button onclick="handleLogout()" class="text-red-400 text-lg font-medium px-2 py-1 active-scale">登出</button>
@@ -277,6 +280,7 @@
             document.getElementById('total-balance').innerText = `$${balance.toLocaleString()}`;
 
             const sortedTx = [...transactions].sort((a, b) => {
+                // 兼容 iOS Safari 解析
                 const timeA = new Date(`${a.date.replace(/-/g, '/')} ${a.time}`).getTime() || 0;
                 const timeB = new Date(`${b.date.replace(/-/g, '/')} ${b.time}`).getTime() || 0;
                 return timeB - timeA;
@@ -312,6 +316,17 @@
                 `;
                 listEl.appendChild(item);
             });
+
+            if (sortedTx.length > displayLimit) {
+                const moreBtn = document.createElement('button');
+                moreBtn.className = 'w-full py-2.5 mt-2 text-zinc-300 text-base font-medium bg-[#1C1C1E] rounded-xl border border-zinc-800/50 active-scale hover:bg-zinc-800 transition-colors';
+                moreBtn.innerText = `顯示更多 (還有 ${sortedTx.length - displayLimit} 筆)`;
+                moreBtn.onclick = () => {
+                    displayLimit += 20;
+                    renderDashboard();
+                };
+                listEl.appendChild(moreBtn);
+            }
         }
 
         function showForm(mode, id = null) {
