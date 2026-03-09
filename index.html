@@ -1,473 +1,132 @@
-<!DOCTYPE html>
-<html lang="zh-TW" class="bg-black">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>極簡記帳</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        ::-webkit-scrollbar { display: none; }
-        body { 
-            -ms-overflow-style: none; 
-            scrollbar-width: none; 
-            background-color: #000000; 
-            color-scheme: dark; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-        }
-        .active-scale:active { transform: scale(0.96); transition: transform 0.1s; }
-        .safe-top { padding-top: env(safe-area-inset-top); }
-        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-        button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    </style>
-</head>
-<body class="text-white antialiased h-screen flex flex-col overflow-hidden bg-black">
+const SHEET_USERS = 'Users';
+const SHEET_TX = 'Transactions';
 
-    <!-- 載入中遮罩 -->
-    <div id="loading-overlay" class="hidden absolute inset-0 bg-black/80 z-[300] flex flex-col items-center justify-center backdrop-blur-sm transition-opacity">
-        <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500 mb-4"></div>
-        <p class="text-white text-lg font-medium tracking-widest animate-pulse">處理中...</p>
-    </div>
+function doGet(e) {
+  return ContentService.createTextOutput("極簡記帳 API 伺服器運作中...")
+    .setMimeType(ContentService.MimeType.TEXT);
+}
 
-    <!-- 提示訊息 -->
-    <div id="toast" class="hidden absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg z-[400] transition-opacity duration-300 opacity-0 font-medium whitespace-nowrap text-lg text-center">
-        提示訊息
-    </div>
+function doPost(e) {
+  const output = (data) => ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+  
+  try {
+    const params = JSON.parse(e.postData.contents);
+    const action = params.action;
+    
+    if (action === 'verifyLogin') {
+      return output(verifyLogin(params.user, params.pass));
+    } else if (action === 'getTransactions') {
+      // 支援 limit 與 offset 的分頁請求
+      return output(getTransactions(params.user, params.limit, params.offset));
+    } else if (action === 'saveTransaction') {
+      return output(saveTransaction(params.user, params.tx));
+    } else if (action === 'deleteTransaction') {
+      return output(deleteTransaction(params.user, params.id));
+    } else if (action === 'getSummary') {
+      // 用於主畫面快速顯示置中的總結餘
+      return output(getSummary(params.user));
+    } else {
+      return output({success: false, message: '無效指令'});
+    }
+  } catch (err) {
+    return output({success: false, message: 'API 錯誤: ' + err.toString()});
+  }
+}
 
-    <!-- ================= 登入畫面 ================= -->
-    <div id="view-login" class="hidden absolute inset-0 bg-black z-[200] flex flex-col items-center justify-center px-5">
-        <div class="w-full max-w-sm bg-[#1C1C1E] p-8 rounded-[2.5rem] border border-zinc-800 shadow-2xl">
-            <div class="text-center mb-10">
-                <div class="w-16 h-16 bg-blue-500 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                </div>
-                <h1 class="text-3xl font-extrabold text-white tracking-tight">極簡記帳</h1>
-            </div>
-            <div class="space-y-5">
-                <input type="text" id="login-username" placeholder="帳號" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
-                <input type="password" id="login-password" placeholder="密碼" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
-                <button onclick="handleLogin()" class="w-full mt-4 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl active-scale">登入</button>
-            </div>
-        </div>
-    </div>
+// 驗證登入
+function verifyLogin(user, pass) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_USERS);
+  const data = sheet.getDataRange().getDisplayValues(); 
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === user && data[i][1] === pass) return { success: true };
+  }
+  return { success: false, message: '帳號或密碼錯誤' };
+}
 
-    <!-- ================= 主畫面 ================= -->
-    <div id="view-home" class="hidden flex flex-col h-full w-full max-md mx-auto relative bg-black">
-        <!-- 頂部區塊優化：金額置中、按鈕並排 -->
-        <div class="bg-[#1C1C1E] px-5 pt-16 pb-6 z-10 rounded-b-[2.5rem] border-b border-zinc-800 shadow-md safe-top">
-            <!-- 結餘置中對齊 -->
-            <div class="text-center mb-6">
-                <p class="text-gray-400 text-sm font-medium mb-1 tracking-wider">目前結餘</p>
-                <h1 id="total-balance" class="text-5xl font-black tracking-tighter text-white break-all leading-tight">$0</h1>
-            </div>
-            <!-- 風格統一的並排按鈕區 -->
-            <div class="flex items-center space-x-3">
-                <button onclick="showQuery()" class="flex-1 bg-zinc-800 text-blue-400 text-xl font-bold py-4 rounded-2xl flex items-center justify-center active-scale border border-zinc-700/50 shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    查詢
-                </button>
-                <button onclick="showForm('add')" class="flex-1 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl flex items-center justify-center active-scale shadow-[0_4px_15px_rgba(37,99,235,0.3)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    新增
-                </button>
-            </div>
-        </div>
-        <div class="flex-1 overflow-y-auto px-4 py-4 pb-24">
-            <!-- 移除最多 20 筆字樣 -->
-            <h2 class="text-xs text-zinc-500 font-bold mb-4 px-1 uppercase tracking-widest text-left">最近帳目</h2>
-            <div id="transaction-list" class="space-y-3"></div>
-        </div>
-    </div>
+// 取得總結餘 (效能優化：只計算數值，不傳輸明細)
+function getSummary(user) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_TX);
+  const data = sheet.getDataRange().getDisplayValues();
+  let balance = 0;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === user) {
+      const type = data[i][2];
+      const amount = parseInt(data[i][4], 10) || 0;
+      balance += (type === 'income' ? amount : -amount);
+    }
+  }
+  return { success: true, balance: balance };
+}
 
-    <!-- ================= 表單畫面 (新增/修改) ================= -->
-    <div id="view-form" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto overflow-hidden">
-        <!-- 頂部標題列 -->
-        <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top flex-shrink-0">
-            <button onclick="hideForm()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">取消</button>
-            <h2 id="form-title" class="text-xl font-extrabold text-white text-center">新增帳目</h2>
-            <div class="w-20"></div> 
-        </div>
-        <div class="p-5 flex-1 overflow-y-auto bg-black pb-12 text-left">
-            <input type="hidden" id="form-id">
-            <div class="flex bg-[#1C1C1E] p-1.5 rounded-2xl mb-6 border border-zinc-800/50">
-                <button id="btn-type-expense" onclick="setFormType('expense')" class="flex-1 py-3 text-lg font-bold rounded-xl bg-[#2C2C2E] text-red-400">支出</button>
-                <button id="btn-type-income" onclick="setFormType('income')" class="flex-1 py-3 text-lg font-bold rounded-xl text-gray-400 bg-transparent">收入</button>
-            </div>
-            <input type="hidden" id="form-type" value="expense">
+// 取得帳目 (實作伺服器端分頁與排序)
+function getTransactions(user, limit = 20, offset = 0) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_TX);
+  const data = sheet.getDataRange().getDisplayValues();
+  let userTx = [];
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === user) {
+      userTx.push({
+        id: data[i][0],
+        type: data[i][2],
+        name: data[i][3],
+        amount: parseInt(data[i][4], 10) || 0,
+        date: data[i][5],
+        time: data[i][6],
+        note: data[i][7]
+      });
+    }
+  }
+  
+  // 依日期時間倒序排列 (最新的在前)
+  userTx.sort((a, b) => {
+    const timeA = new Date(a.date.replace(/-/g, '/') + ' ' + a.time).getTime();
+    const timeB = new Date(b.date.replace(/-/g, '/') + ' ' + b.time).getTime();
+    return timeB - timeA;
+  });
+  
+  const totalCount = userTx.length;
+  const pagedData = userTx.slice(offset, offset + limit);
+  
+  return { 
+    success: true, 
+    data: pagedData, 
+    hasMore: (offset + limit) < totalCount,
+    totalCount: totalCount
+  };
+}
 
-            <div class="bg-[#1C1C1E] rounded-3xl overflow-hidden mb-8 border border-zinc-800/50 divide-y divide-zinc-800">
-                <div class="px-5 py-5 flex items-center">
-                    <label class="w-16 flex-shrink-0 text-gray-400 font-bold text-lg">金額</label>
-                    <input type="text" id="form-amount" inputmode="numeric" pattern="\d*" placeholder="0" class="flex-1 min-w-0 ml-4 text-right text-3xl font-black focus:outline-none bg-transparent text-white">
-                </div>
-                <div class="px-5 py-4 flex items-center">
-                    <label class="w-16 flex-shrink-0 text-gray-400 font-bold text-lg">名稱</label>
-                    <input type="text" id="form-name" placeholder="例如：午餐" class="flex-1 min-w-0 ml-4 text-right text-xl focus:outline-none bg-transparent text-white">
-                </div>
-                <div class="px-5 py-4 flex items-center">
-                    <label class="w-16 flex-shrink-0 text-gray-400 font-bold text-lg">日期</label>
-                    <input type="date" id="form-date" class="flex-1 min-w-0 ml-4 text-right text-xl focus:outline-none bg-transparent text-white">
-                </div>
-                <div class="px-5 py-4 flex items-center">
-                    <label class="w-16 flex-shrink-0 text-gray-400 font-bold text-lg">時間</label>
-                    <input type="time" id="form-time" class="flex-1 min-w-0 ml-4 text-right text-xl focus:outline-none bg-transparent text-white">
-                </div>
-                <div class="px-5 py-4 flex items-center">
-                    <label class="w-16 flex-shrink-0 text-gray-400 font-bold text-lg">備註</label>
-                    <input type="text" id="form-note" placeholder="選填" class="flex-1 min-w-0 ml-4 text-right text-xl focus:outline-none bg-transparent text-white">
-                </div>
-            </div>
+// 儲存帳目 (新增或修改)
+function saveTransaction(user, tx) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_TX);
+  const timestamp = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+  
+  if (tx.id) {
+    const data = sheet.getDataRange().getDisplayValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === tx.id && data[i][1] === user) {
+        sheet.getRange(i + 1, 3, 1, 7).setValues([[
+          tx.type, tx.name, tx.amount, tx.date, tx.time, tx.note || '', timestamp
+        ]]);
+        return { success: true };
+      }
+    }
+  }
+  
+  const newId = new Date().getTime().toString();
+  sheet.appendRow([newId, user, tx.type, tx.name, tx.amount, tx.date, tx.time, tx.note || '', timestamp]);
+  return { success: true };
+}
 
-            <!-- 儲存鈕下移，提升單手操作效率 -->
-            <div class="space-y-4 px-2">
-                <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white text-2xl font-black py-5 rounded-2xl active-scale shadow-lg">儲存帳目</button>
-                <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full text-red-500 text-xl font-bold py-4 rounded-2xl active-scale opacity-80">刪除此筆帳目</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= 查詢畫面 ================= -->
-    <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto text-left overflow-hidden">
-        <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top flex-shrink-0 z-20">
-            <button onclick="hideQuery()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">返回</button>
-            <h2 class="text-xl font-extrabold text-white text-center">查詢明細</h2>
-            <button onclick="handleLogout()" class="text-red-400 text-2xl font-bold px-4 py-2 active-scale">登出</button>
-        </div>
-        
-        <div class="flex-1 overflow-y-auto px-3 pt-4 pb-24">
-            <!-- 篩選器 (隨捲動捲走) -->
-            <div class="mb-5 bg-[#1C1C1E]/50 p-4 rounded-2xl border border-zinc-800/30">
-                <div class="flex items-center space-x-2 mb-4">
-                    <input type="date" id="query-start" class="flex-1 bg-zinc-800 text-white text-base px-3 py-3 rounded-xl outline-none border border-zinc-700/50">
-                    <span class="text-zinc-600 font-black">~</span>
-                    <input type="date" id="query-end" class="flex-1 bg-zinc-800 text-white text-base px-3 py-3 rounded-xl outline-none border border-zinc-700/50">
-                </div>
-                <button onclick="executeQuery()" class="w-full bg-blue-600 text-white text-lg font-bold py-4 rounded-2xl active-scale">開始查詢</button>
-            </div>
-
-            <!-- 總計區 (三行排列，大字體同步 text-2xl) -->
-            <div id="query-summary" class="hidden mb-6 bg-[#1C1C1E] p-6 rounded-[2rem] border border-zinc-800/50 space-y-4">
-                <div class="flex justify-between items-center px-2">
-                    <span class="text-zinc-400 text-base font-bold">總收入</span>
-                    <span id="query-total-income" class="text-2xl font-black text-green-400">$0</span>
-                </div>
-                <div class="flex justify-between items-center px-2">
-                    <span class="text-zinc-400 text-base font-bold">總支出</span>
-                    <span id="query-total-expense" class="text-2xl font-black text-red-400">$0</span>
-                </div>
-                <div class="h-px bg-zinc-800/50 mx-2"></div>
-                <div class="flex justify-between items-center px-2 pt-1">
-                    <span class="text-zinc-300 text-lg font-black uppercase tracking-widest">結餘</span>
-                    <span id="query-net" class="text-2xl font-black text-white">$0</span>
-                </div>
-            </div>
-
-            <!-- 查詢清單 -->
-            <div id="query-list" class="space-y-3"></div>
-        </div>
-    </div>
-
-    <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwd7txRiVd5RXwCjhjAPLzAHVs-rVcWWFmQ9KgVNOIm87iJn7jm9Idib2cqldC0ie4g/exec';
-        let transactions = [];
-        let displayLimit = 20;
-        let currentUser = '';
-
-        function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
-        function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
-        
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.innerText = message;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.remove('opacity-0'), 10);
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-                setTimeout(() => toast.classList.add('hidden'), 300);
-            }, 2500);
-        }
-
-        async function apiCall(action, payload) {
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: action, ...payload }),
-                    redirect: 'follow'
-                });
-                return await response.json();
-            } catch (err) {
-                console.error('API 錯誤:', err);
-                throw new Error('網路連線異常');
-            }
-        }
-
-        window.onload = () => {
-            const savedUser = localStorage.getItem('simple_ledger_user');
-            if (savedUser) {
-                currentUser = savedUser;
-                document.getElementById('view-login').classList.add('hidden');
-                document.getElementById('view-home').classList.remove('hidden');
-                fetchData(); 
-            } else {
-                document.getElementById('view-login').classList.remove('hidden');
-            }
-        };
-
-        async function handleLogin() {
-            const user = document.getElementById('login-username').value.trim();
-            const pass = document.getElementById('login-password').value;
-            if (!user || !pass) { showToast('請輸入帳號密碼'); return; }
-            showLoading(); 
-            try {
-                const res = await apiCall('verifyLogin', { user, pass });
-                if (res.success) {
-                    localStorage.setItem('simple_ledger_user', user);
-                    currentUser = user;
-                    document.getElementById('view-login').classList.add('hidden');
-                    document.getElementById('view-home').classList.remove('hidden');
-                    fetchData(); 
-                } else {
-                    hideLoading();
-                    showToast(res.message);
-                }
-            } catch (err) { hideLoading(); showToast('網路連線異常'); }
-        }
-
-        function handleLogout() {
-            if (confirm('確定要登出？')) {
-                localStorage.removeItem('simple_ledger_user');
-                location.reload();
-            }
-        }
-
-        async function fetchData() {
-            showLoading();
-            try {
-                const res = await apiCall('getTransactions', { user: currentUser });
-                hideLoading();
-                if (res.success) {
-                    transactions = res.data; 
-                    renderDashboard();
-                    if (!document.getElementById('view-query').classList.contains('hidden')) executeQuery();
-                } else {
-                    showToast('讀取失敗：' + res.message);
-                }
-            } catch (err) { hideLoading(); showToast('網路連線異常'); }
-        }
-
-        function renderDashboard() {
-            let balance = 0;
-            transactions.forEach(tx => {
-                if (tx.type === 'income') balance += tx.amount;
-                if (tx.type === 'expense') balance -= tx.amount;
-            });
-            document.getElementById('total-balance').innerText = `$${balance.toLocaleString()}`;
-
-            const sortedTx = [...transactions].sort((a, b) => {
-                const timeA = new Date(`${a.date.replace(/-/g, '/')} ${a.time}`).getTime() || 0;
-                const timeB = new Date(`${b.date.replace(/-/g, '/')} ${b.time}`).getTime() || 0;
-                return timeB - timeA;
-            });
-
-            const listEl = document.getElementById('transaction-list');
-            listEl.innerHTML = '';
-            
-            if (sortedTx.length === 0) {
-                listEl.innerHTML = '<p class="text-center text-zinc-600 mt-12 text-lg">目前尚無帳目</p>';
-                return;
-            }
-
-            const recentTx = sortedTx.slice(0, displayLimit);
-            recentTx.forEach(tx => {
-                listEl.appendChild(createTransactionItem(tx));
-            });
-
-            if (sortedTx.length > displayLimit) {
-                const moreBtn = document.createElement('button');
-                moreBtn.className = 'w-full py-5 mt-4 text-zinc-400 text-lg font-bold bg-[#1C1C1E] rounded-3xl border border-zinc-800/50 active-scale text-center';
-                moreBtn.innerText = `顯示更多 (還有 ${sortedTx.length - displayLimit} 筆)`;
-                moreBtn.onclick = () => { displayLimit += 20; renderDashboard(); };
-                listEl.appendChild(moreBtn);
-            }
-        }
-
-        // 統一風格的帳目清單項目
-        function createTransactionItem(tx) {
-            const isExpense = tx.type === 'expense';
-            const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
-            const sign = isExpense ? '-' : '+';
-            const noteHtml = tx.note ? `<div class="w-full text-sm text-zinc-500 mt-1.5 border-t border-zinc-800/10 pt-0.5 text-left truncate">📝 ${tx.note}</div>` : '';
-            
-            const item = document.createElement('div');
-            item.className = 'bg-[#1C1C1E] px-4 py-3 rounded-[1.5rem] border border-zinc-800/50 flex flex-col active-scale relative overflow-hidden';
-            item.innerHTML = `
-                <div class="w-full text-sm text-gray-500 font-bold mb-0.5 text-left opacity-80">${tx.date} ${tx.time}</div>
-                <div class="w-full flex items-center">
-                    <div class="flex-1 min-w-0 text-left">
-                        <span class="font-bold text-white text-2xl truncate block">${tx.name}</span>
-                    </div>
-                    <div class="flex items-center space-x-4 flex-shrink-0 ml-4">
-                        <span class="font-black ${amountColor} text-2xl tracking-tighter">${sign}$${tx.amount.toLocaleString()}</span>
-                        <button onclick="showForm('edit', '${tx.id}')" class="w-10 h-10 bg-zinc-800/70 rounded-2xl flex items-center justify-center text-zinc-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                ${noteHtml}
-            `;
-            return item;
-        }
-
-        function showForm(mode, id = null) {
-            const fromQuery = !document.getElementById('view-query').classList.contains('hidden');
-            window._last_view = fromQuery ? 'query' : 'home';
-
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-query').classList.add('hidden');
-            document.getElementById('view-form').classList.remove('hidden');
-            
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
-            const timeStr = now.toTimeString().split(' ')[0].slice(0,5);
-
-            if (mode === 'add') {
-                document.getElementById('form-title').innerText = '新增帳目';
-                document.getElementById('form-id').value = '';
-                document.getElementById('form-name').value = '';
-                document.getElementById('form-amount').value = '';
-                document.getElementById('form-date').value = todayStr;
-                document.getElementById('form-time').value = timeStr;
-                document.getElementById('form-note').value = ''; 
-                setFormType('expense');
-                document.getElementById('btn-delete').classList.add('hidden');
-            } else {
-                document.getElementById('form-title').innerText = '修改帳目';
-                const tx = transactions.find(t => t.id === id);
-                if (tx) {
-                    document.getElementById('form-id').value = tx.id;
-                    document.getElementById('form-name').value = tx.name;
-                    document.getElementById('form-amount').value = tx.amount;
-                    document.getElementById('form-date').value = tx.date;
-                    
-                    let rawTime = tx.time || "";
-                    let h = "00", m = "00";
-                    let match = rawTime.match(/(\d{1,2}):(\d{1,2})/);
-                    if (match) {
-                        h = match[1].padStart(2, '0');
-                        m = match[2].padStart(2, '0');
-                        if (rawTime.includes('下午') && parseInt(h) < 12) h = (parseInt(h) + 12).toString();
-                        if (rawTime.includes('上午') && parseInt(h) === 12) h = "00";
-                    }
-                    document.getElementById('form-time').value = `${h}:${m}`;
-                    document.getElementById('form-note').value = tx.note || '';
-                    setFormType(tx.type);
-                    document.getElementById('btn-delete').classList.remove('hidden');
-                }
-            }
-        }
-
-        function hideForm() {
-            document.getElementById('view-form').classList.add('hidden');
-            if (window._last_view === 'query') {
-                document.getElementById('view-query').classList.remove('hidden');
-            } else {
-                document.getElementById('view-home').classList.remove('hidden');
-            }
-        }
-
-        function setFormType(type) {
-            document.getElementById('form-type').value = type;
-            const btnExp = document.getElementById('btn-type-expense');
-            const btnInc = document.getElementById('btn-type-income');
-            if (type === 'expense') {
-                btnExp.className = 'flex-1 py-3 text-lg font-bold rounded-xl bg-[#2C2C2E] text-red-400';
-                btnInc.className = 'flex-1 py-3 text-lg font-bold rounded-xl text-gray-400 bg-transparent';
-            } else {
-                btnInc.className = 'flex-1 py-3 text-lg font-bold rounded-xl bg-[#2C2C2E] text-green-400';
-                btnExp.className = 'flex-1 py-3 text-lg font-bold rounded-xl text-gray-400 bg-transparent';
-            }
-        }
-
-        async function saveTransaction() {
-            const tx = {
-                id: document.getElementById('form-id').value,
-                type: document.getElementById('form-type').value,
-                name: document.getElementById('form-name').value.trim(),
-                amount: parseInt(document.getElementById('form-amount').value, 10),
-                date: document.getElementById('form-date').value,
-                time: document.getElementById('form-time').value,
-                note: document.getElementById('form-note').value.trim()
-            };
-            if (!tx.name || isNaN(tx.amount)) { showToast('請完整輸入名稱與金額'); return; }
-            showLoading(); 
-            try {
-                const res = await apiCall('saveTransaction', { user: currentUser, tx });
-                if (res.success) { hideForm(); fetchData(); showToast('儲存成功'); }
-                else { hideLoading(); showToast(res.message); }
-            } catch (err) { hideLoading(); showToast('網路連線異常'); }
-        }
-
-        async function deleteTransaction() {
-            const id = document.getElementById('form-id').value;
-            if (confirm('確定要刪除這筆帳目嗎？')) {
-                showLoading(); 
-                try {
-                    const res = await apiCall('deleteTransaction', { user: currentUser, id });
-                    if (res.success) { hideForm(); fetchData(); showToast('已刪除'); }
-                    else { hideLoading(); showToast(res.message); }
-                } catch (err) { hideLoading(); showToast('網路連線異常'); }
-            }
-        }
-
-        function showQuery() {
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-query').classList.remove('hidden');
-            const now = new Date();
-            document.getElementById('query-start').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            document.getElementById('query-end').value = now.toISOString().split('T')[0];
-            document.getElementById('query-summary').classList.add('hidden');
-            document.getElementById('query-list').innerHTML = '';
-        }
-
-        function hideQuery() {
-            document.getElementById('view-query').classList.add('hidden');
-            document.getElementById('view-home').classList.remove('hidden');
-        }
-
-        function executeQuery() {
-            const s = document.getElementById('query-start').value;
-            const e = document.getElementById('query-end').value;
-            if (!s || !e) return;
-            const filtered = transactions.filter(tx => tx.date >= s && tx.date <= e);
-            filtered.sort((a,b) => new Date(`${b.date.replace(/-/g, '/')} ${b.time}`).getTime() - new Date(`${a.date.replace(/-/g, '/')} ${a.time}`).getTime());
-            
-            let inc = 0, exp = 0;
-            filtered.forEach(tx => { if(tx.type==='income') inc+=tx.amount; else exp+=tx.amount; });
-            
-            document.getElementById('query-summary').classList.remove('hidden');
-            document.getElementById('query-total-income').innerText = `$${inc.toLocaleString()}`;
-            document.getElementById('query-total-expense').innerText = `$${exp.toLocaleString()}`;
-            document.getElementById('query-net').innerText = `$${(inc-exp).toLocaleString()}`;
-            
-            const list = document.getElementById('query-list');
-            list.innerHTML = '';
-            if (filtered.length === 0) {
-                list.innerHTML = '<p class="text-center text-zinc-600 mt-12 text-lg">此期間無帳目資料</p>';
-                return;
-            }
-            filtered.forEach(tx => list.appendChild(createTransactionItem(tx)));
-        }
-    </script>
-</body>
-</html>
+// 刪除帳目
+function deleteTransaction(user, id) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_TX);
+  const data = sheet.getDataRange().getDisplayValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === id && data[i][1] === user) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { success: false, message: '找不到資料' };
+}
