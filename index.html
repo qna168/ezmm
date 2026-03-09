@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>極簡記帳</title>
+    <!-- iOS Web App 屬性，讓加入主畫面時有 App 的感覺 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- 引入 Tailwind CSS 負責美化介面 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 隱藏捲軸但保持可捲動，讓介面更像原生 App */
+        ::-webkit-scrollbar { display: none; }
+        body { 
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
+            background-color: #000000; /* iOS 純黑背景 */
+            color-scheme: dark; /* 讓 iOS 原生鍵盤與日期選擇器自動切換深色 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        }
+        /* 點擊時的視覺回饋 */
+        .active-scale:active { transform: scale(0.98); transition: transform 0.1s; }
+    </style>
+</head>
+<body class="text-white antialiased h-screen flex flex-col overflow-hidden bg-black">
+
+    <!-- ================= 提示訊息 (Toast) ================= -->
+    <div id="toast" class="hidden absolute top-10 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-5 py-2.5 rounded-full shadow-lg z-[100] transition-opacity duration-300 opacity-0 font-medium whitespace-nowrap text-lg">
+        提示訊息
+    </div>
+
+    <!-- ================= 登入畫面 (Login View) ================= -->
+    <div id="view-login" class="hidden absolute inset-0 bg-black z-[200] flex flex-col items-center justify-center px-5">
+        <div class="w-full max-w-sm bg-[#1C1C1E] p-6 rounded-[2rem] border border-zinc-800 shadow-2xl">
+            <!-- Logo 與標題 -->
+            <div class="text-center mb-8 mt-2">
+                <div class="w-16 h-16 bg-blue-500 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">極簡記帳</h1>
+            </div>
+
+            <!-- 登入表單 -->
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2 text-lg">帳號</label>
+                    <input type="text" id="login-username" placeholder="預設 test" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
+                </div>
+                <div>
+                    <label class="block text-gray-300 font-medium mb-2 text-lg">密碼</label>
+                    <input type="password" id="login-password" placeholder="預設 8888" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
+                </div>
+                <button onclick="handleLogin()" class="w-full mt-8 bg-blue-500 text-white text-xl font-bold py-4 rounded-xl active-scale shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                    登入
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 主畫面 (Home View) ================= -->
+    <div id="view-home" class="hidden flex flex-col h-full w-full max-w-md mx-auto relative bg-black">
+        
+        <!-- 頂部區塊：餘額與新增按鈕 (空間緊湊化，字體放大) -->
+        <div class="bg-[#1C1C1E] px-4 pt-10 pb-4 z-10 rounded-b-[1.5rem] border-b border-zinc-800 shadow-sm">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-gray-300 text-base font-medium mb-0.5">目前餘額</p>
+                    <h1 id="total-balance" class="text-5xl font-bold tracking-tight text-white">$0</h1>
+                </div>
+                <!-- 新增按鈕 -->
+                <button onclick="showForm('add')" class="active-scale bg-blue-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:bg-blue-600 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                </button>
+            </div>
+            <div class="mt-3 flex justify-end">
+                <button onclick="showQuery()" class="text-base text-blue-400 font-medium flex items-center active-scale bg-blue-500/10 px-3 py-1.5 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    查詢
+                </button>
+            </div>
+        </div>
+
+        <!-- 下方區塊：最近 20 筆明細 (間距縮小) -->
+        <div class="flex-1 overflow-y-auto px-3 py-2 pb-20">
+            <h2 class="text-base text-zinc-300 font-semibold mb-2 px-1">最近帳目 (最多 20 筆)</h2>
+            <div id="transaction-list" class="space-y-2">
+                <!-- 明細項目將由 JavaScript 動態生成 -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= 表單畫面 (新增/修改) ================= -->
+    <div id="view-form" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto">
+        <!-- 標題列 -->
+        <div class="flex justify-between items-center px-4 pt-10 pb-3 border-b border-zinc-800 bg-[#1C1C1E]">
+            <button onclick="hideForm()" class="text-blue-400 text-lg font-medium px-2 py-1 active-scale">取消</button>
+            <h2 id="form-title" class="text-xl font-semibold text-white">新增帳目</h2>
+            <button onclick="saveTransaction()" class="text-blue-400 text-lg font-bold px-2 py-1 active-scale">儲存</button>
+        </div>
+
+        <div class="p-4 flex-1 overflow-y-auto bg-black">
+            <input type="hidden" id="form-id">
+            
+            <!-- 類型切換 (支出/收入) -->
+            <div class="flex bg-[#1C1C1E] p-1 rounded-lg mb-4 border border-zinc-800/50">
+                <button id="btn-type-expense" onclick="setFormType('expense')" class="flex-1 py-1.5 text-base font-semibold rounded-md bg-[#2C2C2E] shadow-sm text-red-400 transition-all">支出</button>
+                <button id="btn-type-income" onclick="setFormType('income')" class="flex-1 py-1.5 text-base font-semibold rounded-md text-gray-400 bg-transparent transition-all">收入</button>
+            </div>
+            <input type="hidden" id="form-type" value="expense">
+
+            <!-- 輸入欄位群組 (加入 min-w-0 防爆版，並修正 iOS 數字鍵盤跑版問題) -->
+            <div class="bg-[#1C1C1E] rounded-xl overflow-hidden mb-4 border border-zinc-800/50 divide-y divide-zinc-800">
+                <!-- 金額 (改用 type="text" 徹底解決 iOS type="number" 靠右對齊崩潰的問題) -->
+                <div class="px-3 py-2.5 flex items-center">
+                    <label class="w-16 flex-shrink-0 text-gray-300 font-medium text-lg">金額</label>
+                    <input type="text" id="form-amount" inputmode="numeric" pattern="\d*" placeholder="0" class="flex-1 min-w-0 ml-2 text-right text-3xl font-bold focus:outline-none bg-transparent text-white placeholder-zinc-500">
+                </div>
+                <!-- 名稱 -->
+                <div class="px-3 py-2.5 flex items-center">
+                    <label class="w-16 flex-shrink-0 text-gray-300 font-medium text-lg">名稱</label>
+                    <input type="text" id="form-name" placeholder="例如：午餐" class="flex-1 min-w-0 ml-2 text-right text-lg focus:outline-none bg-transparent text-white placeholder-zinc-500">
+                </div>
+                <!-- 日期 -->
+                <div class="px-3 py-2.5 flex items-center">
+                    <label class="w-16 flex-shrink-0 text-gray-300 font-medium text-lg">日期</label>
+                    <input type="date" id="form-date" class="flex-1 min-w-0 ml-2 text-right text-lg focus:outline-none bg-transparent text-white">
+                </div>
+                <!-- 時間 -->
+                <div class="px-3 py-2.5 flex items-center">
+                    <label class="w-16 flex-shrink-0 text-gray-300 font-medium text-lg">時間</label>
+                    <input type="time" id="form-time" class="flex-1 min-w-0 ml-2 text-right text-lg focus:outline-none bg-transparent text-white">
+                </div>
+            </div>
+
+            <!-- 刪除按鈕 (僅在修改模式顯示) -->
+            <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full bg-[#1C1C1E] text-red-500 text-lg font-semibold py-3 rounded-xl border border-zinc-800 active-scale mt-2">
+                刪除此筆帳目
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ================= 查詢畫面 ================= -->
+    <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto">
+        <!-- 標題列 (新增登出按鈕) -->
+        <div class="flex justify-between items-center px-4 pt-10 pb-3 border-b border-zinc-800 bg-[#1C1C1E]">
+            <button onclick="hideQuery()" class="text-blue-400 text-lg font-medium px-2 py-1 active-scale">返回</button>
+            <h2 class="text-xl font-semibold text-white">查詢</h2>
+            <!-- 登出按鈕 -->
+            <button onclick="handleLogout()" class="text-red-400 text-lg font-medium px-2 py-1 active-scale">登出</button>
+        </div>
+
+        <div class="p-3 bg-black flex-1 flex flex-col overflow-hidden">
+            <!-- 日期區間設定 -->
+            <div class="bg-[#1C1C1E] p-3 rounded-xl mb-3 border border-zinc-800/50">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-gray-300 font-medium text-lg">開始</span>
+                    <input type="date" id="query-start" class="focus:outline-none bg-zinc-800 text-white text-lg px-3 py-1.5 rounded-lg">
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-300 font-medium text-lg">結束</span>
+                    <input type="date" id="query-end" class="focus:outline-none bg-zinc-800 text-white text-lg px-3 py-1.5 rounded-lg">
+                </div>
+                <button onclick="executeQuery()" class="w-full mt-4 bg-blue-500 text-white text-lg font-semibold py-2.5 rounded-xl active-scale shadow-[0_0_15px_rgba(59,130,246,0.3)]">開始查詢</button>
+            </div>
+
+            <!-- 統計結果 -->
+            <div id="query-summary" class="hidden bg-[#1C1C1E] p-3 rounded-xl mb-3 flex justify-between text-center border border-zinc-800/50">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-300 mb-0.5">總收入</p>
+                    <p id="query-total-income" class="text-lg font-semibold text-green-400">$0</p>
+                </div>
+                <div class="w-px bg-zinc-800 mx-1"></div>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-300 mb-0.5">總支出</p>
+                    <p id="query-total-expense" class="text-lg font-semibold text-red-400">$0</p>
+                </div>
+                <div class="w-px bg-zinc-800 mx-1"></div>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-300 mb-0.5">結餘</p>
+                    <p id="query-net" class="text-xl font-bold text-white">$0</p>
+                </div>
+            </div>
+
+            <!-- 查詢結果明細 -->
+            <div class="flex-1 overflow-y-auto pb-10">
+                <div id="query-list" class="space-y-2">
+                    <!-- 查詢結果動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JavaScript 邏輯區塊 ================= -->
+    <script>
+        // 核心資料狀態
+        let transactions = [];
+        let displayLimit = 20; // 控制首頁顯示筆數
+
+        // 初始化：檢查登入狀態並決定顯示哪個畫面
+        window.onload = () => {
+            const isAuth = localStorage.getItem('simple_ledger_auth');
+            
+            if (isAuth === 'true') {
+                // 已登入，顯示主畫面並讀取資料
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('view-home').classList.remove('hidden');
+                loadData();
+                renderDashboard();
+            } else {
+                // 未登入，顯示登入畫面
+                document.getElementById('view-login').classList.remove('hidden');
+                document.getElementById('view-home').classList.add('hidden');
+            }
+        };
+
+        // ========== 登入與登出邏輯 ==========
+        function handleLogin() {
+            const user = document.getElementById('login-username').value.trim();
+            const pass = document.getElementById('login-password').value;
+
+            if (user === 'test' && pass === '8888') {
+                // 登入成功：記錄狀態到 LocalStorage
+                localStorage.setItem('simple_ledger_auth', 'true');
+                
+                // 清空輸入框以策安全
+                document.getElementById('login-username').value = '';
+                document.getElementById('login-password').value = '';
+                
+                // 切換畫面
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('view-home').classList.remove('hidden');
+                
+                // 載入資料
+                loadData();
+                renderDashboard();
+                showToast('登入成功');
+            } else {
+                // 登入失敗
+                showToast('帳號或密碼錯誤');
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('確定要登出嗎？')) {
+                // 清除登入狀態
+                localStorage.removeItem('simple_ledger_auth');
+                
+                // 隱藏所有工作畫面
+                document.getElementById('view-query').classList.add('hidden');
+                document.getElementById('view-form').classList.add('hidden');
+                document.getElementById('view-home').classList.add('hidden');
+                
+                // 顯示登入畫面
+                document.getElementById('view-login').classList.remove('hidden');
+                showToast('已登出');
+            }
+        }
+
+        // ========== 提示訊息邏輯 (取代 alert) ==========
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 2500);
+        }
+
+        // ========== 資料儲存與讀取 (目前使用 LocalStorage) ==========
+        function loadData() {
+            const stored = localStorage.getItem('simple_ledger_data');
+            if (stored) {
+                transactions = JSON.parse(stored);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('simple_ledger_data', JSON.stringify(transactions));
+            renderDashboard(); // 存檔後自動重新渲染主畫面
+        }
+
+        // ========== 畫面渲染邏輯 ==========
+        function renderDashboard() {
+            // 1. 計算餘額 (全部時間)
+            let balance = 0;
+            transactions.forEach(tx => {
+                if (tx.type === 'income') balance += tx.amount;
+                if (tx.type === 'expense') balance -= tx.amount;
+            });
+            document.getElementById('total-balance').innerText = `$${balance.toLocaleString()}`;
+
+            // 2. 排序資料：日期時間最新的在最前面
+            const sortedTx = [...transactions].sort((a, b) => {
+                const timeA = new Date(`${a.date}T${a.time}`).getTime();
+                const timeB = new Date(`${b.date}T${b.time}`).getTime();
+                return timeB - timeA;
+            });
+
+            // 3. 取得目前限制筆數
+            const recentTx = sortedTx.slice(0, displayLimit);
+
+            // 4. 渲染列表
+            const listEl = document.getElementById('transaction-list');
+            listEl.innerHTML = '';
+            
+            if (recentTx.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-zinc-400 mt-8 text-lg">目前尚無帳目</p>';
+                return;
+            }
+
+            recentTx.forEach(tx => {
+                const isExpense = tx.type === 'expense';
+                const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
+                const sign = isExpense ? '-' : '+';
+                
+                // 建立單筆明細卡片 (iOS 深色風格，緊湊且字體放大)
+                const item = document.createElement('div');
+                item.className = 'bg-[#1C1C1E] px-3 py-2.5 rounded-xl flex justify-between items-center border border-zinc-800/50 active-scale transition-transform';
+                item.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-semibold text-white text-xl">${tx.name}</span>
+                        <span class="text-sm text-gray-400 mt-0.5">${tx.date} ${tx.time}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="font-bold ${amountColor} text-xl mr-3">${sign}$${tx.amount.toLocaleString()}</span>
+                        <button onclick="showForm('edit', '${tx.id}')" class="text-zinc-300 hover:text-blue-400 px-3 py-1.5 text-base bg-zinc-800/50 rounded-lg">
+                            修改
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+
+            // 5. 如果還有更多資料，顯示「載入更多」按鈕
+            if (sortedTx.length > displayLimit) {
+                const moreBtn = document.createElement('button');
+                moreBtn.className = 'w-full py-2.5 mt-2 text-zinc-300 text-base font-medium bg-[#1C1C1E] rounded-xl border border-zinc-800/50 active-scale hover:bg-zinc-800 transition-colors';
+                moreBtn.innerText = `顯示更多 (還有 ${sortedTx.length - displayLimit} 筆)`;
+                moreBtn.onclick = () => {
+                    displayLimit += 20;
+                    renderDashboard();
+                };
+                listEl.appendChild(moreBtn);
+            }
+        }
+
+        // ========== 表單操作邏輯 (新增/修改) ==========
+        function showForm(mode, id = null) {
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-form').classList.remove('hidden');
+            
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0].slice(0,5); // HH:MM
+
+            if (mode === 'add') {
+                document.getElementById('form-title').innerText = '新增帳目';
+                document.getElementById('form-id').value = '';
+                document.getElementById('form-name').value = '';
+                document.getElementById('form-amount').value = '';
+                document.getElementById('form-date').value = todayStr;
+                document.getElementById('form-time').value = timeStr;
+                setFormType('expense'); // 預設支出
+                document.getElementById('btn-delete').classList.add('hidden');
+            } else if (mode === 'edit') {
+                document.getElementById('form-title').innerText = '修改帳目';
+                const tx = transactions.find(t => t.id === id);
+                if (tx) {
+                    document.getElementById('form-id').value = tx.id;
+                    document.getElementById('form-name').value = tx.name;
+                    document.getElementById('form-amount').value = tx.amount;
+                    document.getElementById('form-date').value = tx.date;
+                    document.getElementById('form-time').value = tx.time;
+                    setFormType(tx.type);
+                    document.getElementById('btn-delete').classList.remove('hidden');
+                }
+            }
+        }
+
+        function hideForm() {
+            document.getElementById('view-form').classList.add('hidden');
+            document.getElementById('view-home').classList.remove('hidden');
+        }
+
+        function setFormType(type) {
+            document.getElementById('form-type').value = type;
+            const btnExp = document.getElementById('btn-type-expense');
+            const btnInc = document.getElementById('btn-type-income');
+            
+            const activeClass = 'flex-1 py-1.5 text-base font-semibold rounded-md bg-[#2C2C2E] shadow-sm transition-all ';
+            const inactiveClass = 'flex-1 py-1.5 text-base font-semibold rounded-md text-gray-400 bg-transparent transition-all ';
+            
+            if (type === 'expense') {
+                btnExp.className = activeClass + 'text-red-400';
+                btnInc.className = inactiveClass;
+            } else {
+                btnInc.className = activeClass + 'text-green-400';
+                btnExp.className = inactiveClass;
+            }
+        }
+
+        function saveTransaction() {
+            const id = document.getElementById('form-id').value;
+            const type = document.getElementById('form-type').value;
+            const name = document.getElementById('form-name').value.trim();
+            const amountStr = document.getElementById('form-amount').value;
+            const date = document.getElementById('form-date').value;
+            const time = document.getElementById('form-time').value;
+
+            // 簡單驗證 (使用自訂提示取代 alert)
+            if (!name) { showToast('請輸入名稱'); return; }
+            if (!amountStr || isNaN(amountStr) || parseInt(amountStr) <= 0) { showToast('請輸入有效金額'); return; }
+
+            const amount = parseInt(amountStr, 10); // 取整數
+
+            if (id) {
+                // 修改現有
+                const index = transactions.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    transactions[index] = { id, type, name, amount, date, time };
+                }
+            } else {
+                // 新增
+                const newId = Date.now().toString(); // 用時間戳當唯一ID
+                transactions.push({ id: newId, type, name, amount, date, time });
+            }
+
+            saveData();
+            hideForm();
+        }
+
+        function deleteTransaction() {
+            const id = document.getElementById('form-id').value;
+            if (confirm('確定要刪除這筆帳目嗎？')) {
+                transactions = transactions.filter(t => t.id !== id);
+                saveData();
+                hideForm();
+            }
+        }
+
+        // ========== 查詢區段邏輯 ==========
+        function showQuery() {
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-query').classList.remove('hidden');
+            
+            // 預設設定起訖日期為當月第一天與今天
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            const firstDayStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            
+            document.getElementById('query-start').value = firstDayStr;
+            document.getElementById('query-end').value = todayStr;
+            
+            // 清空上次查詢結果
+            document.getElementById('query-summary').classList.add('hidden');
+            document.getElementById('query-list').innerHTML = '';
+        }
+
+        function hideQuery() {
+            document.getElementById('view-query').classList.add('hidden');
+            document.getElementById('view-home').classList.remove('hidden');
+        }
+
+        function executeQuery() {
+            const startDate = document.getElementById('query-start').value;
+            const endDate = document.getElementById('query-end').value;
+
+            if (!startDate || !endDate) {
+                showToast('請選擇起訖日期');
+                return;
+            }
+
+            // 過濾資料
+            const filteredTx = transactions.filter(tx => {
+                return tx.date >= startDate && tx.date <= endDate;
+            });
+
+            // 排序 (新到舊)
+            filteredTx.sort((a, b) => {
+                const timeA = new Date(`${a.date}T${a.time}`).getTime();
+                const timeB = new Date(`${b.date}T${b.time}`).getTime();
+                return timeB - timeA;
+            });
+
+            // 計算統計
+            let inc = 0, exp = 0;
+            filteredTx.forEach(tx => {
+                if (tx.type === 'income') inc += tx.amount;
+                if (tx.type === 'expense') exp += tx.amount;
+            });
+            const net = inc - exp;
+
+            // 顯示統計結果
+            document.getElementById('query-summary').classList.remove('hidden');
+            document.getElementById('query-total-income').innerText = `$${inc.toLocaleString()}`;
+            document.getElementById('query-total-expense').innerText = `$${exp.toLocaleString()}`;
+            
+            const netEl = document.getElementById('query-net');
+            netEl.innerText = `$${net.toLocaleString()}`;
+            netEl.className = `font-bold text-xl ${net >= 0 ? 'text-green-400' : 'text-red-400'}`;
+
+            // 渲染列表
+            const listEl = document.getElementById('query-list');
+            listEl.innerHTML = '';
+            
+            if (filteredTx.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-zinc-400 mt-8 text-lg">此區間無帳目</p>';
+                return;
+            }
+
+            filteredTx.forEach(tx => {
+                const isExpense = tx.type === 'expense';
+                const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
+                const sign = isExpense ? '-' : '+';
+                
+                const item = document.createElement('div');
+                item.className = 'bg-[#1C1C1E] px-3 py-2.5 rounded-lg flex justify-between items-center border border-zinc-800/50';
+                item.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-semibold text-white text-lg">${tx.name}</span>
+                        <span class="text-sm text-gray-400 mt-0.5">${tx.date}</span>
+                    </div>
+                    <span class="font-bold ${amountColor} text-lg">${sign}$${tx.amount.toLocaleString()}</span>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>
