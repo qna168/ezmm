@@ -47,11 +47,11 @@
             <div class="space-y-5">
                 <div>
                     <label class="block text-gray-300 font-medium mb-2 text-lg">帳號</label>
-                    <input type="text" id="login-username" placeholder="預設 test" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
+                    <input type="text" id="login-username" placeholder="請輸入帳號" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
                 </div>
                 <div>
                     <label class="block text-gray-300 font-medium mb-2 text-lg">密碼</label>
-                    <input type="password" id="login-password" placeholder="預設 8888" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
+                    <input type="password" id="login-password" placeholder="請輸入密碼" class="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
                 </div>
                 <button onclick="handleLogin()" class="w-full mt-8 bg-blue-500 text-white text-xl font-bold py-4 rounded-xl active-scale shadow-[0_0_15px_rgba(59,130,246,0.4)]">
                     登入
@@ -64,7 +64,7 @@
     <div id="view-home" class="hidden flex flex-col h-full w-full max-w-md mx-auto relative bg-black">
         
         <!-- 頂部區塊：餘額與新增按鈕 (空間緊湊化，字體放大) -->
-        <div class="bg-[#1C1C1E] px-4 pt-10 pb-4 z-10 rounded-b-[1.5rem] border-b border-zinc-800 shadow-sm">
+        <div class="bg-[#1C1C1E] px-4 pt-16 pb-4 z-10 rounded-b-[1.5rem] border-b border-zinc-800 shadow-sm">
             <div class="flex justify-between items-center">
                 <div>
                     <p class="text-gray-300 text-base font-medium mb-0.5">目前餘額</p>
@@ -100,7 +100,7 @@
     <!-- ================= 表單畫面 (新增/修改) ================= -->
     <div id="view-form" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto">
         <!-- 標題列 -->
-        <div class="flex justify-between items-center px-4 pt-10 pb-3 border-b border-zinc-800 bg-[#1C1C1E]">
+        <div class="flex justify-between items-center px-4 pt-16 pb-3 border-b border-zinc-800 bg-[#1C1C1E]">
             <button onclick="hideForm()" class="text-blue-400 text-lg font-medium px-2 py-1 active-scale">取消</button>
             <h2 id="form-title" class="text-xl font-semibold text-white">新增帳目</h2>
             <button onclick="saveTransaction()" class="text-blue-400 text-lg font-bold px-2 py-1 active-scale">儲存</button>
@@ -151,7 +151,7 @@
     <!-- ================= 查詢畫面 ================= -->
     <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto">
         <!-- 標題列 (新增登出按鈕) -->
-        <div class="flex justify-between items-center px-4 pt-10 pb-3 border-b border-zinc-800 bg-[#1C1C1E]">
+        <div class="flex justify-between items-center px-4 pt-16 pb-3 border-b border-zinc-800 bg-[#1C1C1E]">
             <button onclick="hideQuery()" class="text-blue-400 text-lg font-medium px-2 py-1 active-scale">返回</button>
             <h2 class="text-xl font-semibold text-white">查詢</h2>
             <!-- 登出按鈕 -->
