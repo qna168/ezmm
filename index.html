@@ -125,44 +125,46 @@
         </div>
     </div>
 
-    <!-- 查詢畫面 -->
-    <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto text-left">
-        <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
+    <!-- ================= 查詢畫面 ================= -->
+    <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto text-left overflow-hidden">
+        <!-- 頂部僅固定這欄 -->
+        <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top flex-shrink-0 z-20">
             <button onclick="hideQuery()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">返回</button>
-            <h2 class="text-xl font-extrabold text-white text-center">查詢</h2>
+            <h2 class="text-xl font-extrabold text-white text-center">查詢明細</h2>
             <button onclick="handleLogout()" class="text-red-400 text-2xl font-bold px-4 py-2 active-scale">登出</button>
         </div>
-        <div class="p-4 bg-black flex-1 flex flex-col overflow-hidden pb-12 text-left">
-            <div class="bg-[#1C1C1E] p-6 rounded-3xl mb-6 border border-zinc-800/50">
-                <div class="flex items-center justify-between mb-5">
-                    <span class="text-gray-400 font-bold text-lg">開始</span>
-                    <input type="date" id="query-start" class="focus:outline-none bg-zinc-800 text-white text-xl px-4 py-2 rounded-xl text-right">
+        
+        <!-- 下方全部為滾動區域 -->
+        <div class="flex-1 overflow-y-auto px-3 pt-4 pb-24">
+            <!-- 篩選器 (會隨滾動捲走) -->
+            <div class="mb-4 bg-[#1C1C1E]/50 p-3 rounded-2xl border border-zinc-800/30">
+                <div class="flex items-center space-x-2 mb-3">
+                    <input type="date" id="query-start" class="flex-1 bg-zinc-800 text-white text-base px-3 py-2 rounded-xl outline-none">
+                    <span class="text-zinc-600 font-black">~</span>
+                    <input type="date" id="query-end" class="flex-1 bg-zinc-800 text-white text-base px-3 py-2 rounded-xl outline-none">
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-gray-400 font-bold text-lg">結束</span>
-                    <input type="date" id="query-end" class="focus:outline-none bg-zinc-800 text-white text-xl px-4 py-2 rounded-xl text-right">
-                </div>
-                <button onclick="executeQuery()" class="w-full mt-8 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl active-scale text-center">開始查詢</button>
+                <button onclick="executeQuery()" class="w-full bg-blue-600 text-white text-lg font-bold py-3 rounded-xl active-scale">開始查詢</button>
             </div>
-            <div id="query-summary" class="hidden bg-[#1C1C1E] p-4 rounded-3xl mb-6 flex justify-between text-center border border-zinc-800/50">
-                <div class="flex-1">
-                    <p class="text-xs text-gray-500 mb-1">總收入</p>
-                    <p id="query-total-income" class="text-xl font-bold text-green-400">$0</p>
+
+            <!-- 總計區 (三行垂直排列，大字體，會隨滾動捲走) -->
+            <div id="query-summary" class="hidden mb-6 bg-[#1C1C1E] p-5 rounded-3xl border border-zinc-800/50 space-y-4">
+                <div class="flex justify-between items-center px-2">
+                    <span class="text-zinc-400 text-base font-bold">總收入</span>
+                    <span id="query-total-income" class="text-2xl font-black text-green-400">$0</span>
                 </div>
-                <div class="w-px bg-zinc-800 mx-2"></div>
-                <div class="flex-1">
-                    <p class="text-xs text-gray-500 mb-1">總支出</p>
-                    <p id="query-total-expense" class="text-xl font-bold text-red-400">$0</p>
+                <div class="flex justify-between items-center px-2">
+                    <span class="text-zinc-400 text-base font-bold">總支出</span>
+                    <span id="query-total-expense" class="text-2xl font-black text-red-400">$0</span>
                 </div>
-                <div class="w-px bg-zinc-800 mx-2"></div>
-                <div class="flex-1">
-                    <p class="text-xs text-gray-500 mb-1">結餘</p>
-                    <p id="query-net" class="text-xl font-black text-white">$0</p>
+                <div class="h-px bg-zinc-800/50 mx-2"></div>
+                <div class="flex justify-between items-center px-2 pt-1">
+                    <span class="text-zinc-300 text-lg font-black uppercase tracking-widest">結餘</span>
+                    <span id="query-net" class="text-3xl font-black text-white">$0</span>
                 </div>
             </div>
-            <div class="flex-1 overflow-y-auto pb-10 px-1">
-                <div id="query-list" class="space-y-3"></div>
-            </div>
+
+            <!-- 查詢結果清單 -->
+            <div id="query-list" class="space-y-2.5"></div>
         </div>
     </div>
 
@@ -248,6 +250,7 @@
                 if (res.success) {
                     transactions = res.data; 
                     renderDashboard();
+                    if (!document.getElementById('view-query').classList.contains('hidden')) executeQuery();
                 } else {
                     showToast('讀取失敗：' + res.message);
                 }
@@ -278,40 +281,7 @@
 
             const recentTx = sortedTx.slice(0, displayLimit);
             recentTx.forEach(tx => {
-                const isExpense = tx.type === 'expense';
-                const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
-                const sign = isExpense ? '-' : '+';
-                // 優化備註列：改為 text-sm (與日期一致)，並縮減間距與邊框感
-                const noteHtml = tx.note ? `<div class="w-full text-sm text-zinc-500 mt-0.5 border-t border-zinc-800/10 pt-0.5 text-left truncate">📝 ${tx.note}</div>` : '';
-                
-                const item = document.createElement('div');
-                item.className = 'bg-[#1C1C1E] px-4 py-3 rounded-[1.5rem] border border-zinc-800/50 flex flex-col active-scale relative overflow-hidden';
-                item.innerHTML = `
-                    <!-- 第一層：日期時間 (緊貼名稱) -->
-                    <div class="w-full text-sm text-gray-500 font-bold mb-0.5 text-left opacity-80">
-                        ${tx.date} ${tx.time}
-                    </div>
-                    
-                    <!-- 第二層：名稱與金額 (左對齊) -->
-                    <div class="w-full flex items-center">
-                        <div class="flex-1 min-w-0 text-left">
-                            <span class="font-bold text-white text-2xl truncate block">${tx.name}</span>
-                        </div>
-                        
-                        <div class="flex items-center space-x-4 flex-shrink-0 ml-4">
-                            <span class="font-black ${amountColor} text-2xl tracking-tighter">${sign}$${tx.amount.toLocaleString()}</span>
-                            <button onclick="showForm('edit', '${tx.id}')" class="w-10 h-10 bg-zinc-800/70 rounded-2xl flex items-center justify-center text-zinc-300">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 第三層：備註 (與日期字體大小一致，間距縮減) -->
-                    ${noteHtml}
-                `;
-                listEl.appendChild(item);
+                listEl.appendChild(createTransactionItem(tx));
             });
 
             if (sortedTx.length > displayLimit) {
@@ -323,9 +293,43 @@
             }
         }
 
+        // 統一三層結構渲染函式 (規格同步)
+        function createTransactionItem(tx) {
+            const isExpense = tx.type === 'expense';
+            const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
+            const sign = isExpense ? '-' : '+';
+            const noteHtml = tx.note ? `<div class="w-full text-sm text-zinc-500 mt-0.5 border-t border-zinc-800/10 pt-0.5 text-left truncate">📝 ${tx.note}</div>` : '';
+            
+            const item = document.createElement('div');
+            item.className = 'bg-[#1C1C1E] px-4 py-3 rounded-[1.5rem] border border-zinc-800/50 flex flex-col active-scale relative overflow-hidden';
+            item.innerHTML = `
+                <div class="w-full text-sm text-gray-500 font-bold mb-0.5 text-left opacity-80">${tx.date} ${tx.time}</div>
+                <div class="w-full flex items-center">
+                    <div class="flex-1 min-w-0 text-left">
+                        <span class="font-bold text-white text-2xl truncate block">${tx.name}</span>
+                    </div>
+                    <div class="flex items-center space-x-4 flex-shrink-0 ml-4">
+                        <span class="font-black ${amountColor} text-2xl tracking-tighter">${sign}$${tx.amount.toLocaleString()}</span>
+                        <button onclick="showForm('edit', '${tx.id}')" class="w-10 h-10 bg-zinc-800/70 rounded-2xl flex items-center justify-center text-zinc-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                ${noteHtml}
+            `;
+            return item;
+        }
+
         function showForm(mode, id = null) {
+            const fromQuery = !document.getElementById('view-query').classList.contains('hidden');
+            window._last_view = fromQuery ? 'query' : 'home';
+
             document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-query').classList.add('hidden');
             document.getElementById('view-form').classList.remove('hidden');
+            
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
             const timeStr = now.toTimeString().split(' ')[0].slice(0,5);
@@ -349,7 +353,6 @@
                     document.getElementById('form-amount').value = tx.amount;
                     document.getElementById('form-date').value = tx.date;
                     
-                    // 修改時間 Bug 修復：自動補零
                     let rawTime = tx.time || "";
                     let h = "00", m = "00";
                     let match = rawTime.match(/(\d{1,2}):(\d{1,2})/);
@@ -360,7 +363,6 @@
                         if (rawTime.includes('上午') && parseInt(h) === 12) h = "00";
                     }
                     document.getElementById('form-time').value = `${h}:${m}`;
-                    
                     document.getElementById('form-note').value = tx.note || '';
                     setFormType(tx.type);
                     document.getElementById('btn-delete').classList.remove('hidden');
@@ -370,7 +372,11 @@
 
         function hideForm() {
             document.getElementById('view-form').classList.add('hidden');
-            document.getElementById('view-home').classList.remove('hidden');
+            if (window._last_view === 'query') {
+                document.getElementById('view-query').classList.remove('hidden');
+            } else {
+                document.getElementById('view-home').classList.remove('hidden');
+            }
         }
 
         function setFormType(type) {
@@ -449,12 +455,11 @@
             
             const list = document.getElementById('query-list');
             list.innerHTML = '';
-            filtered.forEach(tx => {
-                const item = document.createElement('div');
-                item.className = 'bg-[#1C1C1E] px-4 py-3 rounded-2xl flex justify-between border border-zinc-800/50 mb-2';
-                item.innerHTML = `<div><p class="text-white font-bold text-lg text-left">${tx.name}</p><p class="text-xs text-gray-500 text-left">${tx.date}</p></div><p class="${tx.type==='expense'?'text-red-400':'text-green-400'} font-black text-xl">$${tx.amount.toLocaleString()}</p>`;
-                list.appendChild(item);
-            });
+            if (filtered.length === 0) {
+                list.innerHTML = '<p class="text-center text-zinc-600 mt-12 text-lg">此期間無帳目資料</p>';
+                return;
+            }
+            filtered.forEach(tx => list.appendChild(createTransactionItem(tx)));
         }
     </script>
 </body>
