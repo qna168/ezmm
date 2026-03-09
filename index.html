@@ -17,7 +17,7 @@
             color-scheme: dark; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
         }
-        .active-scale:active { transform: scale(0.95); transition: transform 0.1s; }
+        .active-scale:active { transform: scale(0.96); transition: transform 0.1s; }
         .safe-top { padding-top: env(safe-area-inset-top); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
         button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -25,19 +25,21 @@
 </head>
 <body class="text-white antialiased h-screen flex flex-col overflow-hidden bg-black">
 
+    <!-- 載入中遮罩 -->
     <div id="loading-overlay" class="hidden absolute inset-0 bg-black/80 z-[300] flex flex-col items-center justify-center backdrop-blur-sm transition-opacity">
         <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500 mb-4"></div>
         <p class="text-white text-lg font-medium tracking-widest animate-pulse">處理中...</p>
     </div>
 
-    <div id="toast" class="hidden absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg z-[400] transition-opacity duration-300 opacity-0 font-medium whitespace-nowrap text-lg">
+    <!-- 提示訊息 -->
+    <div id="toast" class="hidden absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg z-[400] transition-opacity duration-300 opacity-0 font-medium whitespace-nowrap text-lg text-center">
         提示訊息
     </div>
 
     <!-- ================= 登入畫面 ================= -->
     <div id="view-login" class="hidden absolute inset-0 bg-black z-[200] flex flex-col items-center justify-center px-5">
         <div class="w-full max-w-sm bg-[#1C1C1E] p-8 rounded-[2.5rem] border border-zinc-800 shadow-2xl">
-            <div class="text-center mb-10 mt-2">
+            <div class="text-center mb-10">
                 <div class="w-16 h-16 bg-blue-500 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.3)]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
@@ -46,15 +48,9 @@
                 <h1 class="text-3xl font-extrabold text-white tracking-tight">極簡記帳</h1>
             </div>
             <div class="space-y-5">
-                <div>
-                    <label class="block text-gray-400 font-medium mb-2 text-lg px-1">帳號</label>
-                    <input type="text" id="login-username" placeholder="請輸入帳號" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
-                </div>
-                <div>
-                    <label class="block text-gray-400 font-medium mb-2 text-lg px-1">密碼</label>
-                    <input type="password" id="login-password" placeholder="請輸入密碼" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
-                </div>
-                <button onclick="handleLogin()" class="w-full mt-8 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl active-scale">登入</button>
+                <input type="text" id="login-username" placeholder="帳號" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
+                <input type="password" id="login-password" placeholder="密碼" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
+                <button onclick="handleLogin()" class="w-full mt-4 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl active-scale">登入</button>
             </div>
         </div>
     </div>
@@ -63,7 +59,7 @@
     <div id="view-home" class="hidden flex flex-col h-full w-full max-md mx-auto relative bg-black">
         <div class="bg-[#1C1C1E] px-4 pt-16 pb-6 z-10 rounded-b-[2rem] border-b border-zinc-800 shadow-md safe-top">
             <div class="flex justify-between items-start mt-2">
-                <div class="pl-2">
+                <div class="pl-2 text-left">
                     <p class="text-gray-400 text-sm font-medium mb-0.5">目前結餘</p>
                     <h1 id="total-balance" class="text-5xl font-bold tracking-tighter text-white leading-none">$0</h1>
                 </div>
@@ -82,9 +78,9 @@
                 </button>
             </div>
         </div>
-        <div class="flex-1 overflow-y-auto px-4 py-4 pb-24">
-            <h2 class="text-sm text-zinc-500 font-bold mb-4 px-1 uppercase tracking-widest">最近帳目 (最多 20 筆)</h2>
-            <div id="transaction-list" class="space-y-4"></div>
+        <div class="flex-1 overflow-y-auto px-3 py-4 pb-24">
+            <h2 class="text-xs text-zinc-500 font-bold mb-3 px-1 uppercase tracking-widest text-left">最近帳目 (最多 20 筆)</h2>
+            <div id="transaction-list" class="space-y-2.5"></div>
         </div>
     </div>
 
@@ -92,10 +88,10 @@
     <div id="view-form" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto overflow-hidden">
         <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
             <button onclick="hideForm()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">取消</button>
-            <h2 id="form-title" class="text-xl font-extrabold text-white">新增帳目</h2>
+            <h2 id="form-title" class="text-xl font-extrabold text-white text-center">新增帳目</h2>
             <button onclick="saveTransaction()" class="text-blue-400 text-2xl font-black px-4 py-2 active-scale">儲存</button>
         </div>
-        <div class="p-5 flex-1 overflow-y-auto bg-black pb-12">
+        <div class="p-5 flex-1 overflow-y-auto bg-black pb-12 text-left">
             <input type="hidden" id="form-id">
             <div class="flex bg-[#1C1C1E] p-1.5 rounded-2xl mb-6 border border-zinc-800/50">
                 <button id="btn-type-expense" onclick="setFormType('expense')" class="flex-1 py-3 text-lg font-bold rounded-xl bg-[#2C2C2E] text-red-400">支出</button>
@@ -125,30 +121,28 @@
                     <input type="text" id="form-note" placeholder="選填" class="flex-1 min-w-0 ml-4 text-right text-xl focus:outline-none bg-transparent text-white">
                 </div>
             </div>
-            <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full bg-[#1C1C1E] text-red-500 text-lg font-bold py-5 rounded-2xl border border-zinc-800 active-scale mt-2">
-                刪除此筆帳目
-            </button>
+            <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full bg-[#1C1C1E] text-red-500 text-lg font-bold py-5 rounded-2xl border border-zinc-800 active-scale mt-2 text-center">刪除此筆帳目</button>
         </div>
     </div>
 
-    <!-- ================= 查詢畫面 ================= -->
-    <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto">
+    <!-- 查詢畫面 -->
+    <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto text-left">
         <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
             <button onclick="hideQuery()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">返回</button>
-            <h2 class="text-xl font-extrabold text-white">查詢</h2>
+            <h2 class="text-xl font-extrabold text-white text-center">查詢</h2>
             <button onclick="handleLogout()" class="text-red-400 text-2xl font-bold px-4 py-2 active-scale">登出</button>
         </div>
-        <div class="p-4 bg-black flex-1 flex flex-col overflow-hidden pb-12">
+        <div class="p-4 bg-black flex-1 flex flex-col overflow-hidden pb-12 text-left">
             <div class="bg-[#1C1C1E] p-6 rounded-3xl mb-6 border border-zinc-800/50">
                 <div class="flex items-center justify-between mb-5">
                     <span class="text-gray-400 font-bold text-lg">開始</span>
-                    <input type="date" id="query-start" class="focus:outline-none bg-zinc-800 text-white text-xl px-4 py-2 rounded-xl">
+                    <input type="date" id="query-start" class="focus:outline-none bg-zinc-800 text-white text-xl px-4 py-2 rounded-xl text-right">
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-gray-400 font-bold text-lg">結束</span>
-                    <input type="date" id="query-end" class="focus:outline-none bg-zinc-800 text-white text-xl px-4 py-2 rounded-xl">
+                    <input type="date" id="query-end" class="focus:outline-none bg-zinc-800 text-white text-xl px-4 py-2 rounded-xl text-right">
                 </div>
-                <button onclick="executeQuery()" class="w-full mt-8 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl active-scale">開始查詢</button>
+                <button onclick="executeQuery()" class="w-full mt-8 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl active-scale text-center">開始查詢</button>
             </div>
             <div id="query-summary" class="hidden bg-[#1C1C1E] p-4 rounded-3xl mb-6 flex justify-between text-center border border-zinc-800/50">
                 <div class="flex-1">
@@ -236,7 +230,7 @@
                     hideLoading();
                     showToast(res.message);
                 }
-            } catch (err) { hideLoading(); showToast(err.message); }
+            } catch (err) { hideLoading(); showToast('網路異常'); }
         }
 
         function handleLogout() {
@@ -257,7 +251,7 @@
                 } else {
                     showToast('讀取失敗：' + res.message);
                 }
-            } catch (err) { hideLoading(); showToast(err.message); }
+            } catch (err) { hideLoading(); showToast('網路異常'); }
         }
 
         function renderDashboard() {
@@ -274,43 +268,47 @@
                 return timeB - timeA;
             });
 
-            const recentTx = sortedTx.slice(0, displayLimit);
             const listEl = document.getElementById('transaction-list');
             listEl.innerHTML = '';
             
-            if (recentTx.length === 0) {
+            if (sortedTx.length === 0) {
                 listEl.innerHTML = '<p class="text-center text-zinc-600 mt-12 text-lg">目前尚無帳目</p>';
                 return;
             }
 
+            const recentTx = sortedTx.slice(0, displayLimit);
             recentTx.forEach(tx => {
                 const isExpense = tx.type === 'expense';
                 const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
                 const sign = isExpense ? '-' : '+';
-                const noteHtml = tx.note ? `<div class="w-full text-base text-zinc-500 mt-2 border-t border-zinc-800/30 pt-2">📝 ${tx.note}</div>` : '';
+                const noteHtml = tx.note ? `<div class="w-full text-base text-zinc-500 mt-1.5 border-t border-zinc-800/10 pt-1 text-left">📝 ${tx.note}</div>` : '';
                 
                 const item = document.createElement('div');
-                item.className = 'bg-[#1C1C1E] px-5 py-5 rounded-[2rem] border border-zinc-800/50 flex flex-col active-scale';
+                // 緊湊佈局：內距 px-4 py-3，圓角 1.5rem
+                item.className = 'bg-[#1C1C1E] px-4 py-3 rounded-[1.5rem] border border-zinc-800/50 flex flex-col active-scale relative overflow-hidden';
                 item.innerHTML = `
-                    <!-- 第一層：日期時間 -->
-                    <div class="w-full text-base text-gray-500 font-medium mb-3">
+                    <!-- 第一層：日期時間 (緊貼名稱) -->
+                    <div class="w-full text-sm text-gray-500 font-bold mb-0.5 text-left opacity-80">
                         ${tx.date} ${tx.time}
                     </div>
-                    <!-- 第二層：名稱(置中)與金額(右) -->
-                    <div class="w-full flex items-center relative min-h-[40px]">
-                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span class="font-bold text-white text-2xl truncate max-w-[50%]">${tx.name}</span>
+                    
+                    <!-- 第二層：名稱與金額 (左對齊) -->
+                    <div class="w-full flex items-center">
+                        <div class="flex-1 min-w-0 text-left">
+                            <span class="font-bold text-white text-2xl truncate block">${tx.name}</span>
                         </div>
-                        <div class="ml-auto flex items-center space-x-4">
+                        
+                        <div class="flex items-center space-x-4 flex-shrink-0 ml-4">
                             <span class="font-black ${amountColor} text-2xl tracking-tighter">${sign}$${tx.amount.toLocaleString()}</span>
-                            <button onclick="showForm('edit', '${tx.id}')" class="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-400">
+                            <button onclick="showForm('edit', '${tx.id}')" class="w-10 h-10 bg-zinc-800/70 rounded-2xl flex items-center justify-center text-zinc-300">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                             </button>
                         </div>
                     </div>
-                    <!-- 第三層：備註 -->
+                    
+                    <!-- 第三層：備註 (緊湊間距) -->
                     ${noteHtml}
                 `;
                 listEl.appendChild(item);
@@ -318,12 +316,9 @@
 
             if (sortedTx.length > displayLimit) {
                 const moreBtn = document.createElement('button');
-                moreBtn.className = 'w-full py-5 mt-4 text-zinc-400 text-lg font-bold bg-[#1C1C1E] rounded-3xl border border-zinc-800/50 active-scale';
+                moreBtn.className = 'w-full py-4 mt-4 text-zinc-400 text-lg font-bold bg-[#1C1C1E] rounded-3xl border border-zinc-800/50 active-scale text-center';
                 moreBtn.innerText = `顯示更多 (還有 ${sortedTx.length - displayLimit} 筆)`;
-                moreBtn.onclick = () => {
-                    displayLimit += 20;
-                    renderDashboard();
-                };
+                moreBtn.onclick = () => { displayLimit += 20; renderDashboard(); };
                 listEl.appendChild(moreBtn);
             }
         }
@@ -354,10 +349,16 @@
                     document.getElementById('form-amount').value = tx.amount;
                     document.getElementById('form-date').value = tx.date;
                     
-                    // 時間標準化：確保格式為 HH:mm 以便填入 input[type="time"]
-                    let [h, m] = tx.time.split(':');
-                    h = h.trim().padStart(2, '0');
-                    m = m.trim().padStart(2, '0');
+                    // 修改時間 Bug 修復：自動補零
+                    let rawTime = tx.time || "";
+                    let h = "00", m = "00";
+                    let match = rawTime.match(/(\d{1,2}):(\d{1,2})/);
+                    if (match) {
+                        h = match[1].padStart(2, '0');
+                        m = match[2].padStart(2, '0');
+                        if (rawTime.includes('下午') && parseInt(h) < 12) h = (parseInt(h) + 12).toString();
+                        if (rawTime.includes('上午') && parseInt(h) === 12) h = "00";
+                    }
                     document.getElementById('form-time').value = `${h}:${m}`;
                     
                     document.getElementById('form-note').value = tx.note || '';
@@ -395,13 +396,13 @@
                 time: document.getElementById('form-time').value,
                 note: document.getElementById('form-note').value.trim()
             };
-            if (!tx.name || isNaN(tx.amount)) { showToast('請正確輸入內容'); return; }
+            if (!tx.name || isNaN(tx.amount)) { showToast('請完整輸入名稱與金額'); return; }
             showLoading(); 
             try {
                 const res = await apiCall('saveTransaction', { user: currentUser, tx });
                 if (res.success) { hideForm(); fetchData(); showToast('儲存成功'); }
                 else { hideLoading(); showToast(res.message); }
-            } catch (err) { hideLoading(); showToast(err.message); }
+            } catch (err) { hideLoading(); showToast('網路連線異常'); }
         }
 
         async function deleteTransaction() {
@@ -412,7 +413,7 @@
                     const res = await apiCall('deleteTransaction', { user: currentUser, id });
                     if (res.success) { hideForm(); fetchData(); showToast('已刪除'); }
                     else { hideLoading(); showToast(res.message); }
-                } catch (err) { hideLoading(); showToast(err.message); }
+                } catch (err) { hideLoading(); showToast('網路連線異常'); }
             }
         }
 
@@ -450,8 +451,8 @@
             list.innerHTML = '';
             filtered.forEach(tx => {
                 const item = document.createElement('div');
-                item.className = 'bg-[#1C1C1E] px-5 py-5 rounded-3xl flex justify-between border border-zinc-800/50 mb-3';
-                item.innerHTML = `<div><p class="text-white font-bold text-xl">${tx.name}</p><p class="text-base text-gray-500">${tx.date}</p></div><p class="${tx.type==='expense'?'text-red-400':'text-green-400'} font-black text-xl">$${tx.amount.toLocaleString()}</p>`;
+                item.className = 'bg-[#1C1C1E] px-4 py-3 rounded-2xl flex justify-between border border-zinc-800/50 mb-2';
+                item.innerHTML = `<div><p class="text-white font-bold text-lg text-left">${tx.name}</p><p class="text-xs text-gray-500 text-left">${tx.date}</p></div><p class="${tx.type==='expense'?'text-red-400':'text-green-400'} font-black text-xl">$${tx.amount.toLocaleString()}</p>`;
                 list.appendChild(item);
             });
         }
