@@ -25,13 +25,11 @@
 </head>
 <body class="text-white antialiased h-screen flex flex-col overflow-hidden bg-black">
 
-    <!-- 載入中遮罩 -->
-    <div id="loading-overlay" class="hidden absolute inset-0 bg-black/80 z-[300] flex flex-col items-center justify-center backdrop-blur-sm">
+    <div id="loading-overlay" class="hidden absolute inset-0 bg-black/80 z-[300] flex flex-col items-center justify-center backdrop-blur-sm transition-opacity">
         <div class="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-blue-500 mb-4"></div>
         <p class="text-white text-lg font-medium tracking-widest animate-pulse">處理中...</p>
     </div>
 
-    <!-- 提示訊息 -->
     <div id="toast" class="hidden absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg z-[400] transition-opacity duration-300 opacity-0 font-medium whitespace-nowrap text-lg">
         提示訊息
     </div>
@@ -50,15 +48,13 @@
             <div class="space-y-5">
                 <div>
                     <label class="block text-gray-400 font-medium mb-2 text-lg px-1">帳號</label>
-                    <input type="text" id="login-username" placeholder="請輸入帳號" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500">
+                    <input type="text" id="login-username" placeholder="請輸入帳號" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
                 </div>
                 <div>
                     <label class="block text-gray-400 font-medium mb-2 text-lg px-1">密碼</label>
-                    <input type="password" id="login-password" placeholder="請輸入密碼" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500">
+                    <input type="password" id="login-password" placeholder="請輸入密碼" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
                 </div>
-                <button onclick="handleLogin()" class="w-full mt-8 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl active-scale">
-                    登入
-                </button>
+                <button onclick="handleLogin()" class="w-full mt-8 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl active-scale">登入</button>
             </div>
         </div>
     </div>
@@ -68,18 +64,18 @@
         <div class="bg-[#1C1C1E] px-4 pt-16 pb-6 z-10 rounded-b-[2rem] border-b border-zinc-800 shadow-md safe-top">
             <div class="flex justify-between items-start mt-2">
                 <div class="pl-2">
-                    <p class="text-gray-400 text-base font-medium mb-1">目前結餘</p>
+                    <p class="text-gray-400 text-sm font-medium mb-0.5">目前結餘</p>
                     <h1 id="total-balance" class="text-5xl font-bold tracking-tighter text-white leading-none">$0</h1>
                 </div>
                 <button onclick="showForm('add')" class="active-scale bg-blue-500 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_8px_20px_rgba(59,130,246,0.3)] mr-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                 </button>
             </div>
-            <div class="mt-4 flex justify-end px-2">
-                <button onclick="showQuery()" class="text-lg text-blue-400 font-bold flex items-center active-scale bg-blue-500/10 px-5 py-2 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <div class="mt-5 flex justify-end px-2">
+                <button onclick="showQuery()" class="text-xl text-blue-400 font-bold flex items-center active-scale bg-blue-500/10 px-6 py-2 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     查詢
@@ -87,12 +83,12 @@
             </div>
         </div>
         <div class="flex-1 overflow-y-auto px-4 py-4 pb-24">
-            <h2 class="text-sm text-zinc-500 font-bold mb-4 px-1 uppercase tracking-wider">最近帳目 (最多 20 筆)</h2>
-            <div id="transaction-list" class="space-y-3"></div>
+            <h2 class="text-sm text-zinc-500 font-bold mb-4 px-1 uppercase tracking-widest">最近帳目 (最多 20 筆)</h2>
+            <div id="transaction-list" class="space-y-4"></div>
         </div>
     </div>
 
-    <!-- ================= 表單畫面 (新增/修改) ================= -->
+    <!-- ================= 表單畫面 ================= -->
     <div id="view-form" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto overflow-hidden">
         <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top">
             <button onclick="hideForm()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">取消</button>
@@ -102,8 +98,8 @@
         <div class="p-5 flex-1 overflow-y-auto bg-black pb-12">
             <input type="hidden" id="form-id">
             <div class="flex bg-[#1C1C1E] p-1.5 rounded-2xl mb-6 border border-zinc-800/50">
-                <button id="btn-type-expense" onclick="setFormType('expense')" class="flex-1 py-3 text-lg font-bold rounded-xl bg-[#2C2C2E] text-red-400 transition-all">支出</button>
-                <button id="btn-type-income" onclick="setFormType('income')" class="flex-1 py-3 text-lg font-bold rounded-xl text-gray-400 bg-transparent transition-all">收入</button>
+                <button id="btn-type-expense" onclick="setFormType('expense')" class="flex-1 py-3 text-lg font-bold rounded-xl bg-[#2C2C2E] text-red-400">支出</button>
+                <button id="btn-type-income" onclick="setFormType('income')" class="flex-1 py-3 text-lg font-bold rounded-xl text-gray-400 bg-transparent">收入</button>
             </div>
             <input type="hidden" id="form-type" value="expense">
 
@@ -291,24 +287,31 @@
                 const isExpense = tx.type === 'expense';
                 const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
                 const sign = isExpense ? '-' : '+';
-                const noteHtml = tx.note ? `<div class="text-sm text-zinc-500 mt-1 truncate max-w-[180px]">📝 ${tx.note}</div>` : '';
+                const noteHtml = tx.note ? `<div class="w-full text-base text-zinc-500 mt-2 border-t border-zinc-800/30 pt-2">📝 ${tx.note}</div>` : '';
                 
                 const item = document.createElement('div');
-                item.className = 'bg-[#1C1C1E] px-5 py-5 rounded-3xl flex justify-between items-center border border-zinc-800/50 active-scale';
+                item.className = 'bg-[#1C1C1E] px-5 py-5 rounded-[2rem] border border-zinc-800/50 flex flex-col active-scale';
                 item.innerHTML = `
-                    <div class="flex flex-col flex-1 min-w-0 pr-4">
-                        <span class="font-bold text-white text-2xl truncate mb-1">${tx.name}</span>
-                        <span class="text-base text-gray-500 font-medium">${tx.date} ${tx.time}</span>
-                        ${noteHtml}
+                    <!-- 第一層：日期時間 -->
+                    <div class="w-full text-base text-gray-500 font-medium mb-3">
+                        ${tx.date} ${tx.time}
                     </div>
-                    <div class="flex items-center space-x-5 flex-shrink-0">
-                        <span class="font-black ${amountColor} text-2xl tracking-tighter">${sign}$${tx.amount.toLocaleString()}</span>
-                        <button onclick="showForm('edit', '${tx.id}')" class="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </button>
+                    <!-- 第二層：名稱(置中)與金額(右) -->
+                    <div class="w-full flex items-center relative min-h-[40px]">
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span class="font-bold text-white text-2xl truncate max-w-[50%]">${tx.name}</span>
+                        </div>
+                        <div class="ml-auto flex items-center space-x-4">
+                            <span class="font-black ${amountColor} text-2xl tracking-tighter">${sign}$${tx.amount.toLocaleString()}</span>
+                            <button onclick="showForm('edit', '${tx.id}')" class="w-12 h-12 bg-zinc-800 rounded-2xl flex items-center justify-center text-zinc-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
+                    <!-- 第三層：備註 -->
+                    ${noteHtml}
                 `;
                 listEl.appendChild(item);
             });
@@ -350,7 +353,13 @@
                     document.getElementById('form-name').value = tx.name;
                     document.getElementById('form-amount').value = tx.amount;
                     document.getElementById('form-date').value = tx.date;
-                    document.getElementById('form-time').value = tx.time;
+                    
+                    // 時間標準化：確保格式為 HH:mm 以便填入 input[type="time"]
+                    let [h, m] = tx.time.split(':');
+                    h = h.trim().padStart(2, '0');
+                    m = m.trim().padStart(2, '0');
+                    document.getElementById('form-time').value = `${h}:${m}`;
+                    
                     document.getElementById('form-note').value = tx.note || '';
                     setFormType(tx.type);
                     document.getElementById('btn-delete').classList.remove('hidden');
