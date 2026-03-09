@@ -45,7 +45,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                 </div>
-                <h1 class="text-3xl font-extrabold text-white tracking-tight text-center">極簡記帳</h1>
+                <h1 class="text-3xl font-extrabold text-white tracking-tight">極簡記帳</h1>
             </div>
             <div class="space-y-5">
                 <input type="text" id="login-username" placeholder="帳號" class="w-full bg-black border border-zinc-800 rounded-2xl px-5 py-3.5 text-white text-xl focus:outline-none focus:border-blue-500 transition-colors">
@@ -57,10 +57,11 @@
 
     <!-- ================= 主畫面 ================= -->
     <div id="view-home" class="hidden flex flex-col h-full w-full max-md mx-auto relative bg-black">
-        <!-- 頂部區塊優化：金額完全寬屏，按鈕下移並排 -->
-        <div class="bg-[#1C1C1E] px-5 pt-16 pb-6 z-10 rounded-b-[2rem] border-b border-zinc-800 shadow-md safe-top">
-            <div class="text-left mb-6">
-                <p class="text-gray-400 text-sm font-medium mb-1">目前結餘</p>
+        <!-- 頂部區塊優化：金額置中、按鈕並排 -->
+        <div class="bg-[#1C1C1E] px-5 pt-16 pb-6 z-10 rounded-b-[2.5rem] border-b border-zinc-800 shadow-md safe-top">
+            <!-- 結餘置中對齊 -->
+            <div class="text-center mb-6">
+                <p class="text-gray-400 text-sm font-medium mb-1 tracking-wider">目前結餘</p>
                 <h1 id="total-balance" class="text-5xl font-black tracking-tighter text-white break-all leading-tight">$0</h1>
             </div>
             <!-- 風格統一的並排按鈕區 -->
@@ -80,18 +81,19 @@
             </div>
         </div>
         <div class="flex-1 overflow-y-auto px-4 py-4 pb-24">
-            <h2 class="text-xs text-zinc-500 font-bold mb-4 px-1 uppercase tracking-widest text-left">最近帳目 (最多 20 筆)</h2>
+            <!-- 移除最多 20 筆字樣 -->
+            <h2 class="text-xs text-zinc-500 font-bold mb-4 px-1 uppercase tracking-widest text-left">最近帳目</h2>
             <div id="transaction-list" class="space-y-3"></div>
         </div>
     </div>
 
     <!-- ================= 表單畫面 (新增/修改) ================= -->
     <div id="view-form" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto overflow-hidden">
-        <!-- 頂部只留取消與標題 -->
+        <!-- 頂部標題列 -->
         <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top flex-shrink-0">
             <button onclick="hideForm()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">取消</button>
-            <h2 id="form-title" class="text-xl font-extrabold text-white">新增帳目</h2>
-            <div class="w-20"></div> <!-- 佔位符保持標題居中 -->
+            <h2 id="form-title" class="text-xl font-extrabold text-white text-center">新增帳目</h2>
+            <div class="w-20"></div> 
         </div>
         <div class="p-5 flex-1 overflow-y-auto bg-black pb-12 text-left">
             <input type="hidden" id="form-id">
@@ -124,7 +126,7 @@
                 </div>
             </div>
 
-            <!-- 操作重心下移：儲存與刪除在此 -->
+            <!-- 儲存鈕下移，提升單手操作效率 -->
             <div class="space-y-4 px-2">
                 <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white text-2xl font-black py-5 rounded-2xl active-scale shadow-lg">儲存帳目</button>
                 <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full text-red-500 text-xl font-bold py-4 rounded-2xl active-scale opacity-80">刪除此筆帳目</button>
@@ -134,15 +136,14 @@
 
     <!-- ================= 查詢畫面 ================= -->
     <div id="view-query" class="hidden absolute inset-0 bg-black z-50 flex flex-col w-full max-w-md mx-auto text-left overflow-hidden">
-        <!-- 頂部僅固定導覽列 -->
         <div class="flex justify-between items-center px-4 pt-16 pb-4 border-b border-zinc-800 bg-[#1C1C1E] safe-top flex-shrink-0 z-20">
             <button onclick="hideQuery()" class="text-blue-400 text-2xl font-bold px-4 py-2 active-scale">返回</button>
-            <h2 class="text-xl font-extrabold text-white">查詢明細</h2>
+            <h2 class="text-xl font-extrabold text-white text-center">查詢明細</h2>
             <button onclick="handleLogout()" class="text-red-400 text-2xl font-bold px-4 py-2 active-scale">登出</button>
         </div>
         
         <div class="flex-1 overflow-y-auto px-3 pt-4 pb-24">
-            <!-- 篩選區 (會隨滾動捲走) -->
+            <!-- 篩選器 (隨捲動捲走) -->
             <div class="mb-5 bg-[#1C1C1E]/50 p-4 rounded-2xl border border-zinc-800/30">
                 <div class="flex items-center space-x-2 mb-4">
                     <input type="date" id="query-start" class="flex-1 bg-zinc-800 text-white text-base px-3 py-3 rounded-xl outline-none border border-zinc-700/50">
@@ -152,7 +153,7 @@
                 <button onclick="executeQuery()" class="w-full bg-blue-600 text-white text-lg font-bold py-4 rounded-2xl active-scale">開始查詢</button>
             </div>
 
-            <!-- 總計區 (三行垂直排列，字體同步 text-2xl) -->
+            <!-- 總計區 (三行排列，大字體同步 text-2xl) -->
             <div id="query-summary" class="hidden mb-6 bg-[#1C1C1E] p-6 rounded-[2rem] border border-zinc-800/50 space-y-4">
                 <div class="flex justify-between items-center px-2">
                     <span class="text-zinc-400 text-base font-bold">總收入</span>
@@ -169,7 +170,7 @@
                 </div>
             </div>
 
-            <!-- 查詢結果清單 -->
+            <!-- 查詢清單 -->
             <div id="query-list" class="space-y-3"></div>
         </div>
     </div>
@@ -299,6 +300,7 @@
             }
         }
 
+        // 統一風格的帳目清單項目
         function createTransactionItem(tx) {
             const isExpense = tx.type === 'expense';
             const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
