@@ -281,10 +281,10 @@
                 const isExpense = tx.type === 'expense';
                 const amountColor = isExpense ? 'text-red-400' : 'text-green-400';
                 const sign = isExpense ? '-' : '+';
-                const noteHtml = tx.note ? `<div class="w-full text-base text-zinc-500 mt-1.5 border-t border-zinc-800/10 pt-1 text-left">📝 ${tx.note}</div>` : '';
+                // 優化備註列：改為 text-sm (與日期一致)，並縮減間距與邊框感
+                const noteHtml = tx.note ? `<div class="w-full text-sm text-zinc-500 mt-0.5 border-t border-zinc-800/10 pt-0.5 text-left truncate">📝 ${tx.note}</div>` : '';
                 
                 const item = document.createElement('div');
-                // 緊湊佈局：內距 px-4 py-3，圓角 1.5rem
                 item.className = 'bg-[#1C1C1E] px-4 py-3 rounded-[1.5rem] border border-zinc-800/50 flex flex-col active-scale relative overflow-hidden';
                 item.innerHTML = `
                     <!-- 第一層：日期時間 (緊貼名稱) -->
@@ -308,7 +308,7 @@
                         </div>
                     </div>
                     
-                    <!-- 第三層：備註 (緊湊間距) -->
+                    <!-- 第三層：備註 (與日期字體大小一致，間距縮減) -->
                     ${noteHtml}
                 `;
                 listEl.appendChild(item);
