@@ -3,15 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>極簡記帳</title>
-    <!-- iOS Web App 屬性 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         ::-webkit-scrollbar { display: none; }
@@ -37,7 +32,7 @@
     </div>
 
     <!-- 提示訊息 -->
-    <div id="toast" class="hidden absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg z-[400] transition-opacity duration-300 opacity-0 font-medium whitespace-nowrap text-lg text-center">
+    <div id="toast" class="hidden absolute top-24 left-1/2 transform -translate-x-1/2 bg-zinc-800 text-white border border-zinc-700 px-6 py-3 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.5)] z-[400] transition-opacity duration-300 opacity-0 font-medium whitespace-nowrap text-lg text-center">
         提示訊息
     </div>
 
@@ -63,26 +58,26 @@
     <!-- ================= 主畫面 ================= -->
     <div id="view-home" class="hidden flex flex-col h-full w-full max-w-md mx-auto relative bg-black">
         <div class="bg-[#1C1C1E] px-5 pt-16 pb-6 z-10 rounded-b-[2.5rem] border-b border-zinc-800 shadow-md safe-top">
-            <!-- 結餘置中，超大字體且自動折行防止破圖 -->
+            <!-- 結餘穩固置中 -->
             <div class="text-center mb-6">
                 <p class="text-gray-400 text-sm font-medium mb-1 tracking-widest uppercase">目前結餘</p>
                 <h1 id="total-balance" class="text-5xl font-black tracking-tighter text-white break-all leading-tight">$0</h1>
             </div>
-            <!-- 功能按鈕 -->
+            <!-- 一小兩大排版：刷新、查詢、新增 -->
             <div class="flex items-center space-x-3">
-                <button onclick="manualRefresh()" class="w-16 bg-zinc-800 text-zinc-200 py-4 rounded-2xl flex items-center justify-center active-scale border border-zinc-700/50 shadow-sm" aria-label="重新整理">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M5.8 18.2A8 8 0 0019 15m-.8-9.2A8 8 0 005 9" />
+                <button onclick="manualRefresh()" class="w-16 h-16 bg-zinc-800 text-zinc-300 rounded-2xl flex items-center justify-center active-scale border border-zinc-700/50 flex-shrink-0 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                 </button>
-                <button onclick="showQuery()" class="flex-1 bg-zinc-800 text-blue-400 text-xl font-bold py-4 rounded-2xl flex items-center justify-center active-scale border border-zinc-700/50 shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <button onclick="showQuery()" class="flex-1 h-16 bg-zinc-800 text-blue-400 text-xl font-bold rounded-2xl flex items-center justify-center active-scale border border-zinc-700/50 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     查詢
                 </button>
-                <button onclick="showForm('add')" class="flex-1 bg-blue-600 text-white text-xl font-bold py-4 rounded-2xl flex items-center justify-center active-scale shadow-[0_4px_15px_rgba(37,99,235,0.3)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <button onclick="showForm('add')" class="flex-1 h-16 bg-blue-600 text-white text-xl font-bold rounded-2xl flex items-center justify-center active-scale shadow-[0_4px_15px_rgba(37,99,235,0.3)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                     新增
@@ -92,7 +87,7 @@
         <div class="flex-1 overflow-y-auto px-4 py-4 pb-24">
             <h2 class="text-xs text-zinc-500 font-bold mb-4 px-1 uppercase tracking-widest text-left">最近帳目</h2>
             <div id="transaction-list" class="space-y-3"></div>
-            <!-- 主畫面加載按鈕 (真分頁) -->
+            <!-- 主畫面加載按鈕 -->
             <button id="btn-load-more" onclick="loadMoreHome()" class="hidden w-full py-5 mt-4 text-zinc-400 text-lg font-bold bg-[#1C1C1E] rounded-3xl border border-zinc-800/50 active-scale text-center">
                 顯示更多帳目
             </button>
@@ -138,10 +133,10 @@
                 </div>
             </div>
 
-            <!-- 儲存與刪除移至最下方，大拇指友善操作 -->
+            <!-- 儲存與刪除移至最下方，大拇指友善 -->
             <div class="space-y-4 px-2">
                 <button onclick="saveTransaction()" class="w-full bg-blue-600 text-white text-2xl font-black py-5 rounded-2xl active-scale shadow-lg">儲存帳目</button>
-                <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full text-red-500 text-xl font-bold py-4 rounded-2xl active-scale opacity-80 text-center">刪除此筆帳目</button>
+                <button id="btn-delete" onclick="deleteTransaction()" class="hidden w-full text-red-500 text-xl font-bold py-4 rounded-2xl active-scale opacity-80 text-center border border-red-500/20">刪除此筆帳目</button>
             </div>
         </div>
     </div>
@@ -163,7 +158,7 @@
                     <span class="text-zinc-600 font-black">~</span>
                     <input type="date" id="query-end" class="flex-1 bg-zinc-800 text-white text-base px-3 py-3 rounded-xl outline-none border border-zinc-700/50">
                 </div>
-                <button onclick="startQuery()" class="w-full bg-blue-600 text-white text-lg font-bold py-4 rounded-2xl active-scale">開始查詢</button>
+                <button onclick="startQuery()" class="w-full bg-blue-600 text-white text-lg font-bold py-4 rounded-2xl active-scale shadow-sm">開始查詢</button>
             </div>
 
             <!-- 總計區 (垂直三行，字體大小 text-2xl) -->
@@ -195,9 +190,15 @@
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbwd7txRiVd5RXwCjhjAPLzAHVs-rVcWWFmQ9KgVNOIm87iJn7jm9Idib2cqldC0ie4g/exec';
         let currentUser = '';
+        
+        // 分頁與快取控制
         let homeOffset = 0;
         let queryOffset = 0;
         const PAGE_SIZE = 20;
+        let txCache = {}; // 存放所有讀取過的帳目，提升表單開啟速度
+
+        // 髒標記：控制從查詢返回主畫面時，是否需要自動重新整理
+        let isDataDirty = false; 
 
         function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
         function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
@@ -217,7 +218,6 @@
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    cache: 'no-store',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: action, ...payload }),
                     redirect: 'follow'
@@ -229,41 +229,13 @@
             }
         }
 
-        function getVisibleView() {
-            if (!document.getElementById('view-query').classList.contains('hidden')) return 'query';
-            if (!document.getElementById('view-home').classList.contains('hidden')) return 'home';
-            return 'login';
-        }
-
-        async function manualRefresh(showSuccessToast = true) {
-            const activeView = getVisibleView();
-            let success = false;
-
-            if (activeView === 'query') {
-                const hasDates = document.getElementById('query-start').value && document.getElementById('query-end').value;
-                success = hasDates ? await startQuery() : false;
-                if (!hasDates) showToast('請先選擇查詢日期');
-            } else if (activeView === 'home' && currentUser) {
-                success = await refreshHome();
-            } else {
-                location.reload();
-                return;
-            }
-
-            if (success && showSuccessToast) showToast('已重新整理');
-        }
-
-        window.addEventListener('pageshow', (event) => {
-            if (event.persisted && currentUser) manualRefresh(false);
-        });
-
         window.onload = () => {
             const savedUser = localStorage.getItem('simple_ledger_user');
             if (savedUser) {
                 currentUser = savedUser;
                 document.getElementById('view-login').classList.add('hidden');
                 document.getElementById('view-home').classList.remove('hidden');
-                manualRefresh(false);
+                refreshHome(); 
             } else {
                 document.getElementById('view-login').classList.remove('hidden');
             }
@@ -300,6 +272,12 @@
 
         // ================= 主畫面資料載入 =================
 
+        // 手動刷新 (提供回饋感)
+        function manualRefresh() {
+            showToast('同步最新資料中...');
+            refreshHome();
+        }
+
         async function refreshHome() {
             showLoading();
             homeOffset = 0;
@@ -312,8 +290,8 @@
                 hideLoading();
                 if (summary.success) document.getElementById('total-balance').innerText = `$${summary.balance.toLocaleString()}`;
                 if (txs.success) renderHomeItems(txs.data, txs.hasMore);
-                return summary.success && txs.success;
-            } catch (err) { hideLoading(); showToast('載入異常'); return false; }
+                isDataDirty = false; // 已經是最新的了，洗白髒標記
+            } catch (err) { hideLoading(); showToast('載入異常'); }
         }
 
         async function loadMoreHome() {
@@ -333,7 +311,10 @@
             if (items.length === 0 && !append) {
                 listEl.innerHTML = '<p class="text-center text-zinc-600 mt-12 text-lg">目前尚無帳目</p>';
             } else {
-                items.forEach(tx => listEl.appendChild(createItemEl(tx)));
+                items.forEach(tx => {
+                    txCache[tx.id] = tx; // 存入快取
+                    listEl.appendChild(createItemEl(tx));
+                });
             }
 
             const moreBtn = document.getElementById('btn-load-more');
@@ -346,7 +327,7 @@
         async function startQuery() {
             const s = document.getElementById('query-start').value;
             const e = document.getElementById('query-end').value;
-            if (!s || !e) { showToast('請選擇完整的日期區間'); return false; }
+            if (!s || !e) { showToast('請選擇完整的日期區間'); return; }
             showLoading();
             queryOffset = 0;
             document.getElementById('query-list').innerHTML = '';
@@ -363,8 +344,7 @@
                     document.getElementById('query-net').innerText = `$${summary.balance.toLocaleString()}`;
                 }
                 if (txs.success) renderQueryItems(txs.data, txs.hasMore);
-                return summary.success && txs.success;
-            } catch (err) { hideLoading(); showToast('查詢異常'); return false; }
+            } catch (err) { hideLoading(); showToast('查詢異常'); }
         }
 
         async function loadMoreQuery() {
@@ -385,7 +365,10 @@
             if (items.length === 0 && !append) {
                 listEl.innerHTML = '<p class="text-center text-zinc-600 mt-12 text-lg">此期間無帳目資料</p>';
             } else {
-                items.forEach(tx => listEl.appendChild(createItemEl(tx)));
+                items.forEach(tx => {
+                    txCache[tx.id] = tx; // 存入快取
+                    listEl.appendChild(createItemEl(tx));
+                });
             }
             const moreBtn = document.getElementById('btn-query-load-more');
             if (hasMore) moreBtn.classList.remove('hidden');
@@ -413,7 +396,7 @@
                     </div>
                     <div class="flex items-center space-x-4 flex-shrink-0 ml-4">
                         <span class="font-black ${amountColor} text-2xl tracking-tighter">${sign}$${tx.amount.toLocaleString()}</span>
-                        <button onclick="showForm('edit', '${tx.id}', ${txJson})" class="w-10 h-10 bg-zinc-800/70 rounded-2xl flex items-center justify-center text-zinc-300">
+                        <button onclick="showForm('edit', '${tx.id}')" class="w-10 h-10 bg-zinc-800/70 rounded-2xl flex items-center justify-center text-zinc-300">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
@@ -427,7 +410,7 @@
 
         // ================= 表單互動 =================
 
-        function showForm(mode, id = null, txData = null) {
+        function showForm(mode, id = null) {
             // 追蹤發起修改的視窗
             window._last_view = !document.getElementById('view-query').classList.contains('hidden') ? 'query' : 'home';
             
@@ -448,25 +431,29 @@
                 document.getElementById('btn-delete').classList.add('hidden');
             } else {
                 document.getElementById('form-title').innerText = '修改帳目';
-                document.getElementById('form-id').value = id;
-                document.getElementById('form-name').value = txData.name;
-                document.getElementById('form-amount').value = txData.amount;
-                document.getElementById('form-date').value = txData.date;
+                const txData = txCache[id]; // 從快取讀取，安全且快速
                 
-                // 時間自動格式化 (防呆處理)
-                let rawTime = txData.time || "";
-                let h = "00", m = "00";
-                let match = rawTime.match(/(\d{1,2}):(\d{1,2})/);
-                if (match) {
-                    h = match[1].padStart(2, '0');
-                    m = match[2].padStart(2, '0');
-                    if (rawTime.includes('下午') && parseInt(h) < 12) h = (parseInt(h) + 12).toString();
-                    if (rawTime.includes('上午') && parseInt(h) === 12) h = "00";
+                if (txData) {
+                    document.getElementById('form-id').value = id;
+                    document.getElementById('form-name').value = txData.name;
+                    document.getElementById('form-amount').value = txData.amount;
+                    document.getElementById('form-date').value = txData.date;
+                    
+                    // 時間自動格式化防呆
+                    let rawTime = txData.time || "";
+                    let h = "00", m = "00";
+                    let match = rawTime.match(/(\d{1,2}):(\d{1,2})/);
+                    if (match) {
+                        h = match[1].padStart(2, '0');
+                        m = match[2].padStart(2, '0');
+                        if (rawTime.includes('下午') && parseInt(h) < 12) h = (parseInt(h) + 12).toString();
+                        if (rawTime.includes('上午') && parseInt(h) === 12) h = "00";
+                    }
+                    document.getElementById('form-time').value = `${h}:${m}`;
+                    document.getElementById('form-note').value = txData.note || '';
+                    setFormType(txData.type);
+                    document.getElementById('btn-delete').classList.remove('hidden');
                 }
-                document.getElementById('form-time').value = `${h}:${m}`;
-                document.getElementById('form-note').value = txData.note || '';
-                setFormType(txData.type);
-                document.getElementById('btn-delete').classList.remove('hidden');
             }
         }
 
@@ -504,6 +491,7 @@
             try {
                 const res = await apiCall('saveTransaction', { user: currentUser, tx: tx });
                 if (res.success) { 
+                    isDataDirty = true; // 觸發髒標記
                     hideForm(); 
                     if (window._last_view === 'query') startQuery(); 
                     else refreshHome(); 
@@ -519,6 +507,7 @@
                 try {
                     const res = await apiCall('deleteTransaction', { user: currentUser, id: id });
                     if (res.success) { 
+                        isDataDirty = true; // 觸發髒標記
                         hideForm(); 
                         if (window._last_view === 'query') startQuery(); 
                         else refreshHome(); 
@@ -532,16 +521,23 @@
             document.getElementById('view-home').classList.add('hidden');
             document.getElementById('view-query').classList.remove('hidden');
             const now = new Date();
-            document.getElementById('query-start').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-            document.getElementById('query-end').value = now.toISOString().split('T')[0];
-            document.getElementById('query-summary').classList.add('hidden');
-            document.getElementById('query-list').innerHTML = '';
-            document.getElementById('btn-query-load-more').classList.add('hidden');
+            
+            // 只有當尚未設定日期時才給預設值
+            if (!document.getElementById('query-start').value) {
+                document.getElementById('query-start').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                document.getElementById('query-end').value = now.toISOString().split('T')[0];
+            }
         }
 
+        // 查詢退回主畫面時的智慧防呆
         function hideQuery() {
             document.getElementById('view-query').classList.add('hidden');
             document.getElementById('view-home').classList.remove('hidden');
+            
+            // 只有當資料在查詢頁面被更動過，才觸發背景重新整理
+            if (isDataDirty) {
+                refreshHome();
+            }
         }
     </script>
 </body>
