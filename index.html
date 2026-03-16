@@ -153,6 +153,18 @@
         <div class="flex-1 overflow-y-auto px-3 pt-4 pb-24">
             <!-- 篩選區 (隨滾動捲走) -->
             <div class="mb-5 bg-[#1C1C1E]/50 p-4 rounded-2xl border border-zinc-800/30">
+                <!-- 快捷日期選擇列 (< 週 月 >) -->
+                <div class="flex items-center justify-center space-x-3 mb-4 border-b border-zinc-800/50 pb-4">
+                    <button onclick="shiftDate(-1)" class="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center border border-zinc-700/50 active-scale shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <button onclick="setQuickDate('week')" id="btn-quick-week" class="px-5 py-2 rounded-xl bg-zinc-800 text-zinc-400 text-base font-bold border border-zinc-700/50 active-scale transition-colors shadow-sm">週</button>
+                    <button onclick="setQuickDate('month')" id="btn-quick-month" class="px-5 py-2 rounded-xl bg-blue-600/20 text-blue-400 text-base font-bold border border-blue-500/30 active-scale transition-colors shadow-sm">月</button>
+                    <button onclick="shiftDate(1)" class="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center border border-zinc-700/50 active-scale shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
+
                 <div class="flex items-center space-x-2 mb-4">
                     <input type="date" id="query-start" class="flex-1 bg-zinc-800 text-white text-base px-3 py-3 rounded-xl outline-none border border-zinc-700/50">
                     <span class="text-zinc-600 font-black">~</span>
@@ -322,7 +334,75 @@
             else moreBtn.classList.add('hidden');
         }
 
-        // ================= 查詢資料載入 =================
+        // ================= 查詢資料載入與快捷日期 =================
+        
+        let currentQueryMode = 'month'; // 用來記錄目前是週還是月，預設本月
+
+        // 設定快捷日期
+        function setQuickDate(mode, referenceDate = new Date()) {
+            currentQueryMode = mode;
+            const startInput = document.getElementById('query-start');
+            const endInput = document.getElementById('query-end');
+            
+            let start, end;
+            if (mode === 'week') {
+                // 週一至週日邏輯
+                const d = new Date(referenceDate);
+                const day = d.getDay();
+                // 如果是週日(0)，往前推6天；否則往前推 (day - 1) 天
+                const diffToMonday = d.getDate() - day + (day === 0 ? -6 : 1);
+                start = new Date(d.setDate(diffToMonday));
+                end = new Date(start.getTime());
+                end.setDate(start.getDate() + 6);
+            } else {
+                // 本月邏輯
+                const d = new Date(referenceDate);
+                start = new Date(d.getFullYear(), d.getMonth(), 1);
+                end = new Date(d.getFullYear(), d.getMonth() + 1, 0); // 下個月第0天 = 這個月最後一天
+            }
+
+            // 格式化為 YYYY-MM-DD
+            const format = (dt) => {
+                const y = dt.getFullYear();
+                const m = String(dt.getMonth() + 1).padStart(2, '0');
+                const day = String(dt.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
+            startInput.value = format(start);
+            endInput.value = format(end);
+
+            // 更新 UI 膠囊按鈕狀態
+            const btnWeek = document.getElementById('btn-quick-week');
+            const btnMonth = document.getElementById('btn-quick-month');
+            const activeClass = 'px-5 py-2 rounded-xl bg-blue-600/20 text-blue-400 text-base font-bold border border-blue-500/30 active-scale transition-colors shadow-sm';
+            const inactiveClass = 'px-5 py-2 rounded-xl bg-zinc-800 text-zinc-400 text-base font-bold border border-zinc-700/50 active-scale transition-colors shadow-sm';
+            
+            if (mode === 'week') {
+                btnWeek.className = activeClass;
+                btnMonth.className = inactiveClass;
+            } else {
+                btnMonth.className = activeClass;
+                btnWeek.className = inactiveClass;
+            }
+        }
+
+        // 平移日期 (上一個/下一個)
+        function shiftDate(direction) {
+            const startInput = document.getElementById('query-start').value;
+            if (!startInput) return;
+            
+            // 將 '-' 替換為 '/' 確保 iOS Safari 正確解析日期
+            const currentStart = new Date(startInput.replace(/-/g, '/'));
+            
+            if (currentQueryMode === 'week') {
+                currentStart.setDate(currentStart.getDate() + (direction * 7));
+                setQuickDate('week', currentStart);
+            } else {
+                currentStart.setMonth(currentStart.getMonth() + direction);
+                setQuickDate('month', currentStart);
+            }
+        }
 
         async function startQuery() {
             const s = document.getElementById('query-start').value;
@@ -520,12 +600,10 @@
         function showQuery() {
             document.getElementById('view-home').classList.add('hidden');
             document.getElementById('view-query').classList.remove('hidden');
-            const now = new Date();
             
-            // 只有當尚未設定日期時才給預設值
+            // 只有當尚未設定日期時，才自動代入預設值（本月）並亮起對應按鈕
             if (!document.getElementById('query-start').value) {
-                document.getElementById('query-start').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-                document.getElementById('query-end').value = now.toISOString().split('T')[0];
+                setQuickDate('month');
             }
         }
 
