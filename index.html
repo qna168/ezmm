@@ -194,7 +194,6 @@
     <!-- ================= JavaScript ================= -->
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbwd7txRiVd5RXwCjhjAPLzAHVs-rVcWWFmQ9KgVNOIm87iJn7jm9Idib2cqldC0ie4g/exec';
-        const AUTO_RELOAD_KEY = 'simple_ledger_auto_reloaded';
         let currentUser = '';
         let homeOffset = 0;
         let queryOffset = 0;
@@ -218,6 +217,7 @@
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
+                    cache: 'no-store',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: action, ...payload }),
                     redirect: 'follow'
@@ -227,12 +227,6 @@
                 console.error('API 錯誤:', err);
                 throw new Error('網路連線異常，請檢查網路狀態');
             }
-        }
-
-        function shouldAutoReloadOnOpen() {
-            if (sessionStorage.getItem(AUTO_RELOAD_KEY)) return false;
-            sessionStorage.setItem(AUTO_RELOAD_KEY, '1');
-            return true;
         }
 
         function getVisibleView() {
@@ -260,15 +254,10 @@
         }
 
         window.addEventListener('pageshow', (event) => {
-            if (event.persisted) location.reload();
+            if (event.persisted && currentUser) manualRefresh(false);
         });
 
         window.onload = () => {
-            if (shouldAutoReloadOnOpen()) {
-                location.reload();
-                return;
-            }
-
             const savedUser = localStorage.getItem('simple_ledger_user');
             if (savedUser) {
                 currentUser = savedUser;
