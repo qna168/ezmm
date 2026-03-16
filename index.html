@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>極簡記帳</title>
     <!-- iOS Web App 屬性 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -65,8 +68,13 @@
                 <p class="text-gray-400 text-sm font-medium mb-1 tracking-widest uppercase">目前結餘</p>
                 <h1 id="total-balance" class="text-5xl font-black tracking-tighter text-white break-all leading-tight">$0</h1>
             </div>
-            <!-- 功能按鈕對稱並排 -->
+            <!-- 功能按鈕 -->
             <div class="flex items-center space-x-3">
+                <button onclick="manualRefresh()" class="w-16 bg-zinc-800 text-zinc-200 py-4 rounded-2xl flex items-center justify-center active-scale border border-zinc-700/50 shadow-sm" aria-label="重新整理">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M5.8 18.2A8 8 0 0019 15m-.8-9.2A8 8 0 005 9" />
+                    </svg>
+                </button>
                 <button onclick="showQuery()" class="flex-1 bg-zinc-800 text-blue-400 text-xl font-bold py-4 rounded-2xl flex items-center justify-center active-scale border border-zinc-700/50 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -186,6 +194,7 @@
     <!-- ================= JavaScript ================= -->
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbwd7txRiVd5RXwCjhjAPLzAHVs-rVcWWFmQ9KgVNOIm87iJn7jm9Idib2cqldC0ie4g/exec';
+        const AUTO_RELOAD_KEY = 'simple_ledger_auto_reloaded';
         let currentUser = '';
         let homeOffset = 0;
         let queryOffset = 0;
@@ -220,13 +229,52 @@
             }
         }
 
+        function shouldAutoReloadOnOpen() {
+            if (sessionStorage.getItem(AUTO_RELOAD_KEY)) return false;
+            sessionStorage.setItem(AUTO_RELOAD_KEY, '1');
+            return true;
+        }
+
+        function getVisibleView() {
+            if (!document.getElementById('view-query').classList.contains('hidden')) return 'query';
+            if (!document.getElementById('view-home').classList.contains('hidden')) return 'home';
+            return 'login';
+        }
+
+        async function manualRefresh(showSuccessToast = true) {
+            const activeView = getVisibleView();
+            let success = false;
+
+            if (activeView === 'query') {
+                const hasDates = document.getElementById('query-start').value && document.getElementById('query-end').value;
+                success = hasDates ? await startQuery() : false;
+                if (!hasDates) showToast('請先選擇查詢日期');
+            } else if (activeView === 'home' && currentUser) {
+                success = await refreshHome();
+            } else {
+                location.reload();
+                return;
+            }
+
+            if (success && showSuccessToast) showToast('已重新整理');
+        }
+
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) location.reload();
+        });
+
         window.onload = () => {
+            if (shouldAutoReloadOnOpen()) {
+                location.reload();
+                return;
+            }
+
             const savedUser = localStorage.getItem('simple_ledger_user');
             if (savedUser) {
                 currentUser = savedUser;
                 document.getElementById('view-login').classList.add('hidden');
                 document.getElementById('view-home').classList.remove('hidden');
-                refreshHome(); 
+                manualRefresh(false);
             } else {
                 document.getElementById('view-login').classList.remove('hidden');
             }
@@ -275,7 +323,8 @@
                 hideLoading();
                 if (summary.success) document.getElementById('total-balance').innerText = `$${summary.balance.toLocaleString()}`;
                 if (txs.success) renderHomeItems(txs.data, txs.hasMore);
-            } catch (err) { hideLoading(); showToast('載入異常'); }
+                return summary.success && txs.success;
+            } catch (err) { hideLoading(); showToast('載入異常'); return false; }
         }
 
         async function loadMoreHome() {
@@ -308,7 +357,7 @@
         async function startQuery() {
             const s = document.getElementById('query-start').value;
             const e = document.getElementById('query-end').value;
-            if (!s || !e) { showToast('請選擇完整的日期區間'); return; }
+            if (!s || !e) { showToast('請選擇完整的日期區間'); return false; }
             showLoading();
             queryOffset = 0;
             document.getElementById('query-list').innerHTML = '';
@@ -325,7 +374,8 @@
                     document.getElementById('query-net').innerText = `$${summary.balance.toLocaleString()}`;
                 }
                 if (txs.success) renderQueryItems(txs.data, txs.hasMore);
-            } catch (err) { hideLoading(); showToast('查詢異常'); }
+                return summary.success && txs.success;
+            } catch (err) { hideLoading(); showToast('查詢異常'); return false; }
         }
 
         async function loadMoreQuery() {
