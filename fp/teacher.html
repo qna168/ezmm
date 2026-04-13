@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b56a6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="QNA Teacher Preview" />
+    <title>管理中心</title>
+    <link rel="stylesheet" href="../frontend/css/style.css" />
+    <link rel="stylesheet" href="../frontend/css/teacher.css" />
+    <link rel="stylesheet" href="./preview.css" />
+  </head>
+  <body class="teacher-page">
+    <main class="app-shell" id="appShell">
+      <header class="top-bar">
+        <h1>管理中心</h1>
+        <div class="top-actions">
+            <button id="refreshTeacherBtn" type="button" class="refresh-btn">更新</button>
+            <button id="openManageBtn" type="button" class="manage-btn">設定</button>
+        </div>
+      </header>
+
+      <nav class="top-tabs" id="topTabs">
+        <button id="tabQuestions" type="button" class="tab-btn active" data-tab="questions">題目</button>
+        <button id="tabSearch" type="button" class="tab-btn" data-tab="search">搜尋</button>
+        <button id="tabStudents" type="button" class="tab-btn" data-tab="students">名單</button>
+      </nav>
+
+      <section id="initView" class="panel hidden">
+        <h2>首次設定</h2>
+        <form id="initForm" class="stack">
+          <div class="field">
+            <label for="initPassword">新密碼</label>
+            <input id="initPassword" type="password" autocomplete="new-password" required />
+          </div>
+          <div class="field">
+            <label for="initPasswordConfirm">確認新密碼</label>
+            <input id="initPasswordConfirm" type="password" autocomplete="new-password" required />
+          </div>
+          <div class="field">
+            <label for="initQuestion">安全問題</label>
+            <select id="initQuestion" required></select>
+          </div>
+          <div class="field">
+            <label for="initAnswer">安全答案</label>
+            <input id="initAnswer" required />
+          </div>
+          <button id="initSubmitBtn" type="submit" class="btn btn-primary">送出</button>
+        </form>
+        <p id="initMsg" class="status-text"></p>
+      </section>
+
+      <section id="questionsView" class="hidden">
+        <section class="panel">
+          <form id="questionToolForm" class="stack">
+            <div class="field">
+              <label for="newQuestionTitle">發布新題目</label>
+              <textarea id="newQuestionTitle" rows="2" placeholder="輸入問題..." required></textarea>
+            </div>
+            <div class="time-inline">
+              <input id="newQuestionHours" type="number" min="0" step="1" value="0" />
+              <span class="time-unit">時</span>
+              <span class="time-sep">:</span>
+              <input id="newQuestionMinutes" type="number" min="0" step="1" value="30" />
+              <span class="time-unit">分</span>
+            </div>
+            <button id="createQuestionBtn" type="submit" class="btn btn-primary">發布並倒數</button>
+          </form>
+        </section>
+
+        <section id="questionList" class="list-stack"></section>
+        <section class="pager-row">
+          <button id="managePrevBtn" type="button" class="btn btn-ghost btn-small">上一頁</button>
+          <p id="managePageInfo" class="page-text"></p>
+          <button id="manageNextBtn" type="button" class="btn btn-ghost btn-small">下一頁</button>
+        </section>
+        <section id="questionEmpty" class="panel hidden">
+          <p class="empty-text">目前沒有題目</p>
+        </section>
+      </section>
+
+      <section id="searchView" class="hidden">
+        <section class="panel">
+          <form id="searchForm" class="stack">
+            <div class="field">
+              <label for="searchInput">題目關鍵字</label>
+              <input id="searchInput" placeholder="輸入關鍵字..." required />
+            </div>
+            <button id="searchBtn" type="submit" class="btn btn-primary">搜尋</button>
+          </form>
+        </section>
+
+        <section id="searchList" class="list-stack"></section>
+        <section class="pager-row">
+          <button id="searchPrevBtn" type="button" class="btn btn-ghost btn-small">上一頁</button>
+          <p id="searchPageInfo" class="page-text"></p>
+          <button id="searchNextBtn" type="button" class="btn btn-ghost btn-small">下一頁</button>
+        </section>
+        <section id="searchEmpty" class="panel">
+          <p id="searchEmptyText" class="empty-text">請輸入關鍵字搜尋題目</p>
+        </section>
+      </section>
+
+      <section id="studentsView" class="hidden">
+        <section class="panel">
+          <p class="student-count">目前學生人數：<span id="studentCount">0 人</span></p>
+        </section>
+        <section id="studentList" class="list-stack"></section>
+        <section id="studentEmpty" class="panel hidden">
+          <p class="empty-text">目前沒有學生</p>
+        </section>
+      </section>
+    </main>
+
+    <div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <section class="modal-sheet">
+        <header class="modal-head">
+          <h2 id="modalTitle"></h2>
+          <div class="modal-head-actions">
+            <button id="modalActionBtn" type="button" class="close-btn modal-action-btn hidden">登出</button>
+            <button id="closeModalBtn" type="button" class="close-btn">關閉</button>
+          </div>
+        </header>
+        <div id="modalBody" class="modal-body"></div>
+      </section>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="./teacher-preview.js"></script>
+  </body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b56a6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="QNA Student Preview" />
+    <title>學生端預覽</title>
+    <link rel="stylesheet" href="../frontend/css/style.css" />
+    <link rel="stylesheet" href="../frontend/css/student.css" />
+    <link rel="stylesheet" href="./preview.css" />
+  </head>
+  <body class="student-page">
+    <main class="student-shell">
+      <header class="student-topbar">
+        <h1>問答系統</h1>
+        <div class="top-actions">
+            <button id="refreshBtn" type="button" class="top-btn top-btn-refresh">
+              <span>重載示範</span>
+            </button>
+            <button id="openManageBtn" type="button" class="top-btn top-btn-manage">
+              <span>切換學生</span>
+            </button>
+        </div>
+      </header>
+
+      <section id="initView" class="student-card hidden">
+        <h2>首次設定</h2>
+        <form id="initForm" class="stack">
+          <div class="field">
+            <label for="initPassword">新密碼</label>
+            <input id="initPassword" type="password" autocomplete="new-password" required />
+          </div>
+          <div class="field">
+            <label for="initPasswordConfirm">確認新密碼</label>
+            <input id="initPasswordConfirm" type="password" autocomplete="new-password" required />
+          </div>
+          <div class="field">
+            <label for="initQuestion">安全問題</label>
+            <select id="initQuestion" required></select>
+          </div>
+          <div class="field">
+            <label for="initAnswer">安全答案</label>
+            <input id="initAnswer" required />
+          </div>
+          <button id="initSubmitBtn" type="submit" class="action-btn answer">送出</button>
+        </form>
+        <p id="initMsg" class="status-text"></p>
+      </section>
+
+      <section id="questionList" class="question-list"></section>
+
+      <section id="emptyView" class="student-card hidden">
+        <p class="empty-text">目前沒有題目</p>
+      </section>
+
+      <section id="pagerRow" class="pager-row">
+        <button id="prevBtn" type="button" class="pager-btn">上一頁</button>
+        <p id="pageInfo" class="page-info"></p>
+        <button id="nextBtn" type="button" class="pager-btn">下一頁</button>
+      </section>
+    </main>
+
+    <div
+      id="modalOverlay"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <section class="modal-sheet">
+        <header class="modal-head">
+          <h2 id="modalTitle"></h2>
+          <div class="modal-head-actions">
+            <button id="modalActionBtn" type="button" class="close-btn modal-action-btn hidden">登出</button>
+            <button id="closeModalBtn" type="button" class="close-btn">關閉</button>
+          </div>
+        </header>
+        <div id="modalBody" class="modal-body"></div>
+      </section>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="./student-preview.js"></script>
+  </body>
+</html>
